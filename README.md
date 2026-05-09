@@ -5,8 +5,8 @@ Home Assistant blueprints and helpers for smart garden irrigation.
 ## Structure
 
 ```
-gartenbewasserung.yaml    # Main blueprint
-garten_helper.yaml        # Input helpers for configuration.yaml
+garden_irrigation.yaml    # Main blueprint
+garden_helper.yaml        # Input helpers for configuration.yaml
 ```
 
 ## Install blueprint
@@ -16,12 +16,12 @@ In Home Assistant:
 2. Enter URL:
 
 ```
-https://raw.githubusercontent.com/nic2045/ha-garden-water/main/gartenbewasserung.yaml
+https://raw.githubusercontent.com/nic2045/ha-garden-water/main/garden_irrigation.yaml
 ```
 
 ## Set up helpers
 
-Add the contents of `garten_helper.yaml` to your `configuration.yaml`:
+Add the contents of `garden_helper.yaml` to your `configuration.yaml`:
 
 ```yaml
 input_boolean:
