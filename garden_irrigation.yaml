@@ -6,7 +6,7 @@ blueprint:
     Supports vacation mode and an optional motion sensor with debounce.
   domain: automation
   homeassistant:
-    min_version: "2024.5.0"
+    min_version: "2024.6.0"
   input:
     valve:
       name: Bewässerungsventil
@@ -81,24 +81,30 @@ blueprint:
         entity:
           domain: input_boolean
 
-    motion_sensor:
-      name: Bewegungssensor (optional)
-      description: When motion is detected the valve is paused until the area is clear
-      default: ""
-      selector:
-        entity:
-          domain: binary_sensor
-          device_class: motion
+    motion_section:
+      name: Motion Sensor
+      icon: mdi:motion-sensor
+      description: Optional — pauses irrigation when motion is detected.
+      collapsed: true
+      input:
+        motion_sensor:
+          name: Bewegungssensor (optional)
+          description: When motion is detected the valve is paused until the area is clear
+          default: ""
+          selector:
+            entity:
+              domain: binary_sensor
+              device_class: motion
 
-    debounce_seconds:
-      name: Debounce-Zeit (Sekunden)
-      description: Extra wait time after motion clears before reopening the valve
-      default: 30
-      selector:
-        number:
-          min: 5
-          max: 120
-          unit_of_measurement: s
+        debounce_seconds:
+          name: Debounce-Zeit (Sekunden)
+          description: Extra wait time after motion clears before reopening the valve
+          default: 30
+          selector:
+            number:
+              min: 5
+              max: 120
+              unit_of_measurement: s
 
 variables:
   valve: !input valve
