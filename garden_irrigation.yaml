@@ -1,5 +1,5 @@
 blueprint:
-  name: Smart Garden Irrigation
+  name: Automated Garden Irrigation
   description: >
     Irrigates automatically based on a Schedule helper (any days and times).
     Skips irrigation when enough rain has fallen or rain probability is high.
