@@ -19,10 +19,12 @@ blueprint:
   input:
     valve:
       name: Bewässerungsventil
-      description: Switch entity of the SONOFF SWV valve
+      description: The irrigation valve — accepts switch or valve entities (any manufacturer)
       selector:
         entity:
-          domain: switch
+          filter:
+            - domain: switch
+            - domain: valve
 
     schedule_section:
       name: Schedule
