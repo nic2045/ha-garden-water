@@ -15,71 +15,87 @@ blueprint:
         entity:
           domain: switch
 
-    morning_time:
-      name: Morgen-Bewässerungszeit
-      description: Time for the morning irrigation run
-      default: "06:00:00"
-      selector:
-        time:
+    schedule_section:
+      name: Schedule
+      icon: mdi:clock-outline
+      description: When and how long to irrigate.
+      input:
+        morning_time:
+          name: Morgen-Bewässerungszeit
+          description: Time for the morning irrigation run
+          default: "06:00:00"
+          selector:
+            time:
 
-    sunset_offset:
-      name: Offset nach Sonnenuntergang
-      description: "Offset after sunset in HH:MM:SS format (e.g. 00:30:00 for 30 minutes)"
-      default: "00:30:00"
-      selector:
-        text:
+        sunset_offset:
+          name: Offset nach Sonnenuntergang
+          description: "Offset after sunset in HH:MM:SS format (e.g. 00:30:00 for 30 minutes)"
+          default: "00:30:00"
+          selector:
+            text:
 
-    irrigation_duration:
-      name: Bewässerungsdauer (Minuten)
-      description: How long the valve stays open (minutes)
-      default: 15
-      selector:
-        number:
-          min: 1
-          max: 60
-          unit_of_measurement: min
+        irrigation_duration:
+          name: Bewässerungsdauer (Minuten)
+          description: How long the valve stays open (minutes)
+          default: 15
+          selector:
+            number:
+              min: 1
+              max: 60
+              unit_of_measurement: min
 
-    rain_threshold:
-      name: Mindest-Regenmenge (mm)
-      description: Irrigation is skipped when today's rainfall exceeds this threshold
-      default: 5
-      selector:
-        number:
-          min: 1
-          max: 20
-          unit_of_measurement: mm
+    weather_section:
+      name: Weather
+      icon: mdi:weather-rainy
+      description: Sensors and thresholds for weather-based skip logic.
+      input:
+        precipitation_sensor:
+          name: Niederschlag-Sensor
+          description: Sensor for accumulated precipitation in mm
+          selector:
+            entity:
+              domain: sensor
 
-    rain_probability_threshold:
-      name: Regenwahrscheinlichkeit (%)
-      description: Irrigation is skipped when rain probability exceeds this threshold
-      default: 70
-      selector:
-        number:
-          min: 10
-          max: 100
-          unit_of_measurement: "%"
+        rain_threshold:
+          name: Mindest-Regenmenge (mm)
+          description: Irrigation is skipped when today's rainfall exceeds this threshold
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 20
+              unit_of_measurement: mm
 
-    precipitation_sensor:
-      name: Niederschlag-Sensor
-      description: Sensor for accumulated precipitation in mm
-      selector:
-        entity:
-          domain: sensor
+        rain_probability_sensor:
+          name: Regenwahrscheinlichkeit-Sensor
+          description: Sensor reporting precipitation probability in % (0–100)
+          selector:
+            entity:
+              domain: sensor
 
-    rain_probability_sensor:
-      name: Regenwahrscheinlichkeit-Sensor
-      description: Sensor reporting precipitation probability in % (0–100)
-      selector:
-        entity:
-          domain: sensor
+        rain_probability_threshold:
+          name: Regenwahrscheinlichkeit (%)
+          description: Irrigation is skipped when rain probability exceeds this threshold
+          default: 70
+          selector:
+            number:
+              min: 10
+              max: 100
+              unit_of_measurement: "%"
 
-    vacation_boolean:
-      name: Urlaubsmodus Helper (optional)
-      description: When ON, all irrigation is suppressed. Leave empty to disable.
-      default: ""
-      selector:
-        entity:
-          domain: input_boolean
+    vacation_section:
+      name: Vacation Mode
+      icon: mdi:palm-tree
+      description: Optional — suppresses all irrigation while away.
+      collapsed: true
+      input:
+        vacation_boolean:
+          name: Urlaubsmodus Helper (optional)
+          description: When ON, all irrigation is suppressed. Leave empty to disable.
+          default: ""
+          selector:
+            entity:
+              domain: input_boolean
 
     motion_section:
       name: Motion Sensor
