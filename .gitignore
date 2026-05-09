@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code (keep settings.json, ignore user-specific files)
+.vscode/launch.json
+.vscode/*.code-snippets
+.vscode/extensions.json
+
+# Editor backups
+*~
+*.swp
+*.swo
+
+# Environment / secrets
+.env
+secrets.yaml
+
+# Python (if scripts are added later)
+__pycache__/
+*.py[cod]
+.venv/
