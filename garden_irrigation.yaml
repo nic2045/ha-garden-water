@@ -1,25 +1,56 @@
 blueprint:
   name: Automated Garden Irrigation
   description: >
-    🌱 Never worry about watering your garden again!
-    v0.9.0 (build 260509)
+    # 🌱 Automated Garden Irrigation
 
-    This blueprint triggers irrigation based on a HA Schedule helper —
-    giving you full control over days and times directly in the HA UI.
-    Rain in the forecast or already fallen? It skips automatically. 🌧️
-    Going on vacation? One toggle and you're covered. 🌴
-    Someone walking through the garden mid-watering? Motion sensor pauses it. 🚶
 
-    📖 Full setup guide and requirements: https://github.com/nic2045/ha-garden-water
+    **Version: v0.9.0 (build 260509)**
 
-    Before using this blueprint, create a Schedule helper in
+
+    Set it up once and your garden takes care of itself — whatever the weather. 🌦️
+
+
+    <details>
+    <summary><b>Features:</b> 👈</summary>
+
+      - **Schedule-Based Triggering:**
+          - Uses a HA Schedule helper for full control over days and times.
+          - Any number of irrigation slots per day — configure directly in the HA UI, no blueprint changes needed.
+
+      - **Weather Skip Logic:** 🌧️
+          - Skips irrigation when today's accumulated rainfall exceeds your threshold.
+          - Skips when rain probability is too high.
+          - Both weather sensors are optional — leave empty to always irrigate.
+
+      - **Vacation Mode:** 🌴
+          - One toggle suppresses all irrigation while you're away.
+          - Optional — leave empty to disable.
+
+      - **Motion Sensor Pause:** 🚶
+          - Pauses the valve mid-run when motion is detected in the garden.
+          - Resumes automatically after the area clears plus a configurable debounce delay.
+          - Optional — leave empty to disable.
+
+      - **Multiple Zones:**
+          - Use the same blueprint for multiple valves by creating one automation per zone.
+
+    </details>
+
+
+    📖 Full setup guide: https://github.com/nic2045/ha-garden-water
+
+
+    ⚠️ Before using this blueprint, create a **Schedule helper** in
     Settings → Helpers → Schedule and configure your irrigation times there.
+
+
+    Required = *
   domain: automation
   homeassistant:
     min_version: "2024.6.0"
   input:
     valve:
-      name: Bewässerungsventil
+      name: "Bewässerungsventil *"
       description: The irrigation valve — accepts switch or valve entities (any manufacturer)
       selector:
         entity:
@@ -28,14 +59,14 @@ blueprint:
             - domain: valve
 
     schedule_section:
-      name: Schedule
+      name: "Schedule *"
       icon: mdi:clock-outline
       description: >
         Select a Schedule helper that defines when to irrigate.
         Create one in Settings → Helpers → Schedule.
       input:
         schedule_entity:
-          name: Bewässerungsplan
+          name: "Bewässerungsplan *"
           description: Schedule helper — defines irrigation days and times
           selector:
             entity:
