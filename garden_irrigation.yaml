@@ -1,10 +1,18 @@
 blueprint:
   name: Automated Garden Irrigation
   description: >
-    Irrigates automatically based on a Schedule helper (any days and times).
-    Skips irrigation when enough rain has fallen or rain probability is high.
-    Supports vacation mode and an optional motion sensor with debounce.
-    Requires a Schedule helper created in Settings → Helpers → Schedule.
+    🌱 Never worry about watering your garden again!
+
+    This blueprint triggers irrigation based on a HA Schedule helper —
+    giving you full control over days and times directly in the HA UI.
+    Rain in the forecast or already fallen? It skips automatically. 🌧️
+    Going on vacation? One toggle and you're covered. 🌴
+    Someone walking through the garden mid-watering? Motion sensor pauses it. 🚶
+
+    📖 Full setup guide and requirements: https://github.com/nic2045/ha-garden-water
+
+    Before using this blueprint, create a Schedule helper in
+    Settings → Helpers → Schedule and configure your irrigation times there.
   domain: automation
   homeassistant:
     min_version: "2024.6.0"
