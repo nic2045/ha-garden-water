@@ -4,7 +4,7 @@ blueprint:
     # 🌱 Automated Garden Irrigation
 
 
-    **Version: v0.9.0 (build 260509)**
+    **Version: v0.9.0 (build 260509.2331)**
 
 
     Set it up once and your garden takes care of itself — whatever the weather. 🌦️
@@ -57,6 +57,7 @@ blueprint:
           filter:
             - domain: switch
             - domain: valve
+              device_class: water
 
     schedule_section:
       name: "Schedule *"
@@ -206,10 +207,7 @@ action:
             - service: switch.turn_off
               target:
                 entity_id: !input valve
-            - wait_for_trigger:
-                - platform: state
-                  entity_id: "{{ motion_sensor }}"
-                  to: "off"
+            - wait_template: "{{ is_state(motion_sensor, 'off') }}"
               timeout:
                 minutes: 10
             - delay:
