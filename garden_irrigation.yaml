@@ -178,7 +178,7 @@ blueprint:
         notify_on_skip:
           name: Notify when irrigation is skipped
           description: Sends a notification whenever a run is skipped (weather, vacation).
-          default: false
+          default: true
           selector:
             boolean:
 
