@@ -74,9 +74,9 @@ blueprint:
           domain: sensor
 
     vacation_boolean:
-      name: Urlaubsmodus Helper
-      description: When ON, all irrigation is suppressed (input_boolean.garten_urlaub)
-      default: input_boolean.garten_urlaub
+      name: Urlaubsmodus Helper (optional)
+      description: When ON, all irrigation is suppressed. Leave empty to disable.
+      default: ""
       selector:
         entity:
           domain: input_boolean
@@ -122,9 +122,9 @@ trigger:
     id: evening
 
 condition:
-  - condition: state
-    entity_id: !input vacation_boolean
-    state: "off"
+  - condition: template
+    value_template: >
+      {{ vacation_boolean == '' or is_state(vacation_boolean, 'off') }}
   - condition: template
     value_template: >
       {{ states(precipitation_sensor) | float(0) < rain_threshold | float }}
