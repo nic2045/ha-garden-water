@@ -51,7 +51,8 @@ blueprint:
       input:
         precipitation_sensor:
           name: Niederschlag-Sensor
-          description: Sensor for accumulated precipitation in mm
+          description: Sensor for accumulated precipitation in mm. Leave empty to always irrigate regardless of rainfall.
+          default: ""
           selector:
             entity:
               domain: sensor
@@ -68,7 +69,8 @@ blueprint:
 
         rain_probability_sensor:
           name: Regenwahrscheinlichkeit-Sensor
-          description: Sensor reporting precipitation probability in % (0–100)
+          description: Sensor reporting precipitation probability in % (0–100). Leave empty to skip this check.
+          default: ""
           selector:
             entity:
               domain: sensor
