@@ -31,6 +31,10 @@ blueprint:
           - Resumes automatically after the area clears plus a configurable debounce delay.
           - Optional — leave empty to disable.
 
+      - **Skip Logging & Notifications:** 🔔
+          - Every skipped run is logged to the HA Logbook with the reason.
+          - Optional push notification to HA, mobile app (iOS/Android), or Alexa.
+
       - **Multiple Zones:**
           - Use the same blueprint for multiple valves by creating one automation per zone.
 
@@ -163,6 +167,30 @@ blueprint:
               max: 120
               unit_of_measurement: s
 
+    notification_section:
+      name: Notifications
+      icon: mdi:bell-outline
+      description: >
+        Every skipped run is always logged to the HA Logbook.
+        Enable notifications to also receive an active alert.
+      collapsed: true
+      input:
+        notify_on_skip:
+          name: Notify when irrigation is skipped
+          description: Sends a notification whenever a run is skipped (weather, vacation).
+          default: false
+          selector:
+            boolean:
+
+        notify_service:
+          name: Notification target (optional)
+          description: >
+            Additional notification service to call, e.g. notify.mobile_app_iphone
+            or notify.alexa_media_echo_dot. Leave empty for HA notifications only.
+          default: ""
+          selector:
+            text:
+
 variables:
   irrigation_duration: !input irrigation_duration
   rain_threshold: !input rain_threshold
@@ -172,6 +200,8 @@ variables:
   vacation_boolean: !input vacation_boolean
   motion_sensor: !input motion_sensor
   debounce_seconds: !input debounce_seconds
+  notify_on_skip: !input notify_on_skip
+  notify_service: !input notify_service
 
 trigger:
   - platform: state
@@ -194,11 +224,30 @@ action:
       - condition: template
         value_template: "{{ skip_reason | trim != '' }}"
     then:
-      - service: persistent_notification.create
+      - service: logbook.log
         data:
-          title: "Irrigation skipped"
-          message: "{{ skip_reason | trim }}"
-          notification_id: "irrigation_skip"
+          name: "Garden Irrigation"
+          message: "Skipped — {{ skip_reason | trim }}"
+          entity_id: !input valve
+
+      - if:
+          - condition: template
+            value_template: "{{ notify_on_skip }}"
+        then:
+          - service: persistent_notification.create
+            data:
+              title: "Irrigation skipped"
+              message: "{{ skip_reason | trim }}"
+              notification_id: "irrigation_skip"
+
+          - if:
+              - condition: template
+                value_template: "{{ notify_service != '' }}"
+            then:
+              - service: "{{ notify_service }}"
+                data:
+                  title: "Irrigation skipped"
+                  message: "{{ skip_reason | trim }}"
     else:
       - service: switch.turn_on
         target:
