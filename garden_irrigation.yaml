@@ -61,11 +61,10 @@ blueprint:
 
     precipitation_sensor:
       name: Niederschlag-Sensor
-      description: Sensor for accumulated precipitation in mm — shown by most weather integrations
+      description: Sensor for accumulated precipitation in mm
       selector:
         entity:
           domain: sensor
-          device_class: precipitation
 
     rain_probability_sensor:
       name: Regenwahrscheinlichkeit-Sensor
