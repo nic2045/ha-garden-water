@@ -1,29 +1,27 @@
 # ha-garden-water
 
-Home Assistant Blueprints und Helpers für die smarte Gartenbewässerung.
+Home Assistant blueprints and helpers for smart garden irrigation.
 
-## Struktur
+## Structure
 
 ```
-blueprints/
-  gartenbewasserung.yaml    # Haupt-Blueprint
-helpers/
-  garten_helper.yaml        # Input Helpers für configuration.yaml
+gartenbewasserung.yaml    # Main blueprint
+garten_helper.yaml        # Input helpers for configuration.yaml
 ```
 
-## Blueprint installieren
+## Install blueprint
 
 In Home Assistant:
-1. Einstellungen → Automationen → Blueprints → Blueprint importieren
-2. URL eingeben:
+1. Settings → Automations → Blueprints → Import blueprint
+2. Enter URL:
 
 ```
-https://raw.githubusercontent.com/nic2045/ha-garden-water/main/blueprints/gartenbewasserung.yaml
+https://raw.githubusercontent.com/nic2045/ha-garden-water/main/gartenbewasserung.yaml
 ```
 
-## Helper einrichten
+## Set up helpers
 
-Inhalt von `helpers/garten_helper.yaml` in deine `configuration.yaml` einfügen:
+Add the contents of `garten_helper.yaml` to your `configuration.yaml`:
 
 ```yaml
 input_boolean:
@@ -32,18 +30,19 @@ input_boolean:
     icon: mdi:palm-tree
 ```
 
-Danach HA neu starten.
+Then restart HA.
 
 ## Features
 
-- Morgen- und Abendbewässerung (Sonnenuntergang + Offset)
-- DWD Wetterintegration (Regenmenge + Wahrscheinlichkeit)
-- Urlaubsmodus (input_boolean)
-- Optionaler Bewegungssensor mit Debounce
-- Alle Parameter per UI einstellbar
-- Mehrere Zonen via mehrere Automationen aus demselben Blueprint
+- Morning and evening irrigation (sunset + configurable offset)
+- DWD weather integration (rainfall amount + probability)
+- Vacation mode (input_boolean)
+- Optional motion sensor with debounce
+- All parameters configurable via UI
+- Multiple zones via multiple automations from the same blueprint
 
-## Voraussetzungen
+## Requirements
 
 - [DWD Weather Integration (FL550)](https://github.com/FL550/dwd_weather) via HACS
-- SONOFF SWV Zigbee Wasserventil via ZHA
+- SONOFF SWV Zigbee water valve via ZHA
+- Home Assistant 2026.1.0 or newer
