@@ -1,0 +1,7 @@
+# Garten Bewässerung Helper
+# Einmalig in configuration.yaml einfügen oder als separate helper.yaml einbinden
+
+input_boolean:
+  garten_urlaub:
+    name: Garten Urlaubsmodus
+    icon: mdi:palm-tree

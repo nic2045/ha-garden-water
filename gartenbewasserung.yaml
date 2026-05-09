@@ -1,0 +1,170 @@
+blueprint:
+  name: Gartenbewässerung mit DWD-Wettersteuerung
+  description: >
+    Bewässert automatisch morgens und abends (nach Sonnenuntergang).
+    Überspringt die Bewässerung bei ausreichend Regen oder hoher Regenwahrscheinlichkeit.
+    Unterstützt Urlaubsmodus und optionalen Bewegungssensor mit Debounce.
+  domain: automation
+  input:
+    ventil:
+      name: Bewässerungsventil
+      description: Der Switch des SONOFF SWV
+      selector:
+        entity:
+          domain: switch
+
+    morgenzeit:
+      name: Morgen-Bewässerungszeit
+      description: Uhrzeit für die morgendliche Bewässerung
+      default: "06:00:00"
+      selector:
+        time:
+
+    abend_offset:
+      name: Offset nach Sonnenuntergang (Minuten)
+      description: Wie viele Minuten nach Sonnenuntergang gegossen wird
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 120
+          unit_of_measurement: min
+
+    bewaesserungsdauer:
+      name: Bewässerungsdauer (Minuten)
+      description: Wie lange das Ventil offen bleibt
+      default: 15
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: min
+
+    regen_menge:
+      name: Mindest-Regenmenge (mm)
+      description: Ab dieser Regenmenge heute wird NICHT gegossen
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 20
+          unit_of_measurement: mm
+
+    regen_wahrscheinlichkeit:
+      name: Regenwahrscheinlichkeit (%)
+      description: Ab dieser Wahrscheinlichkeit wird NICHT gegossen
+      default: 70
+      selector:
+        number:
+          min: 10
+          max: 100
+          unit_of_measurement: "%"
+
+    niederschlag_sensor:
+      name: DWD Niederschlag-Sensor
+      description: Sensor für heute gefallenen Niederschlag
+      default: sensor.berlin_marzahn_niederschlag
+      selector:
+        entity:
+          domain: sensor
+
+    wahrscheinlichkeit_sensor:
+      name: DWD Regenwahrscheinlichkeit-Sensor
+      description: Sensor für Niederschlagswahrscheinlichkeit
+      default: sensor.berlin_marzahn_niederschlagswahrscheinlichkeit
+      selector:
+        entity:
+          domain: sensor
+
+    urlaub_boolean:
+      name: Urlaubsmodus Helper
+      description: input_boolean.garten_urlaub — bei ON wird nicht gegossen
+      default: input_boolean.garten_urlaub
+      selector:
+        entity:
+          domain: input_boolean
+
+    bewegungssensor:
+      name: Bewegungssensor (optional)
+      description: Bei Bewegung wird das Ventil kurz pausiert
+      default: {}
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: motion
+
+    debounce_sekunden:
+      name: Debounce-Zeit (Sekunden)
+      description: Wie lange nach letzter Bewegung gewartet wird bevor Ventil wieder öffnet
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 120
+          unit_of_measurement: s
+
+variables:
+  ventil: !input ventil
+  bewaesserungsdauer: !input bewaesserungsdauer
+  regen_menge: !input regen_menge
+  regen_wahrscheinlichkeit: !input regen_wahrscheinlichkeit
+  niederschlag_sensor: !input niederschlag_sensor
+  wahrscheinlichkeit_sensor: !input wahrscheinlichkeit_sensor
+  urlaub_boolean: !input urlaub_boolean
+  bewegungssensor: !input bewegungssensor
+  debounce_sekunden: !input debounce_sekunden
+
+trigger:
+  - platform: time
+    at: !input morgenzeit
+    id: morgen
+
+  - platform: sun
+    event: sunset
+    offset: !input abend_offset
+    id: abend
+
+condition:
+  - condition: state
+    entity_id: !input urlaub_boolean
+    state: "off"
+  - condition: template
+    value_template: >
+      {{ states(niederschlag_sensor) | float(0) < regen_menge | float }}
+  - condition: template
+    value_template: >
+      {{ states(wahrscheinlichkeit_sensor) | float(0) < regen_wahrscheinlichkeit | float }}
+
+action:
+  - service: switch.turn_on
+    target:
+      entity_id: !input ventil
+
+  - repeat:
+      count: "{{ (bewaesserungsdauer | int * 60 / 5) | int }}"
+      sequence:
+        - delay:
+            seconds: 5
+        - if:
+            - condition: template
+              value_template: >
+                {{ bewegungssensor != {} and is_state(bewegungssensor, 'on') }}
+          then:
+            - service: switch.turn_off
+              target:
+                entity_id: !input ventil
+            - wait_template: "{{ is_state(bewegungssensor, 'off') }}"
+              timeout:
+                minutes: 10
+            - delay:
+                seconds: !input debounce_sekunden
+            - service: switch.turn_on
+              target:
+                entity_id: !input ventil
+
+  - service: switch.turn_off
+    target:
+      entity_id: !input ventil
+
+mode: single
+max_exceeded: silent
