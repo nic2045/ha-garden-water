@@ -59,22 +59,19 @@ blueprint:
           unit_of_measurement: "%"
 
     niederschlag_sensor:
-      name: DWD Niederschlag-Sensor
-      description: Sensor reporting today's accumulated precipitation (from DWD integration)
+      name: Niederschlag-Sensor
+      description: Sensor reporting today's accumulated precipitation in mm (device class: precipitation)
       selector:
         entity:
-          filter:
-            - integration: dwd_weather
-              domain: sensor
+          domain: sensor
+          device_class: precipitation
 
     wahrscheinlichkeit_sensor:
-      name: DWD Regenwahrscheinlichkeit-Sensor
-      description: Sensor reporting the precipitation probability (from DWD integration)
+      name: Regenwahrscheinlichkeit-Sensor
+      description: Sensor reporting precipitation probability in % (0–100)
       selector:
         entity:
-          filter:
-            - integration: dwd_weather
-              domain: sensor
+          domain: sensor
 
     urlaub_boolean:
       name: Urlaubsmodus Helper
