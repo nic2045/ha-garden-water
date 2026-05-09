@@ -4,7 +4,7 @@ blueprint:
     # 🌱 Automated Garden Irrigation
 
 
-    **Version: v0.9.0 (build 260509.2331)**
+    **Version: v0.9.0 (build 260510.0044)**
 
 
     Set it up once and your garden takes care of itself — whatever the weather. 🌦️
@@ -178,47 +178,57 @@ trigger:
     entity_id: !input schedule_entity
     to: "on"
 
-condition:
-  - condition: template
-    value_template: >
-      {{ vacation_boolean == '' or is_state(vacation_boolean, 'off') }}
-  - condition: template
-    value_template: >
-      {{ precipitation_sensor == '' or states(precipitation_sensor) | float(0) < rain_threshold | float }}
-  - condition: template
-    value_template: >
-      {{ rain_probability_sensor == '' or states(rain_probability_sensor) | float(0) < rain_probability_threshold | float }}
-
 action:
-  - service: switch.turn_on
-    target:
-      entity_id: !input valve
+  - variables:
+      skip_reason: >
+        {% if vacation_boolean != '' and is_state(vacation_boolean, 'on') %}
+          Vacation mode is active.
+        {% elif precipitation_sensor != '' and states(precipitation_sensor) | float(0) >= rain_threshold | float %}
+          Rainfall {{ states(precipitation_sensor) | float | round(1) }} mm exceeds threshold {{ rain_threshold }} mm.
+        {% elif rain_probability_sensor != '' and states(rain_probability_sensor) | float(0) >= rain_probability_threshold | float %}
+          Rain probability {{ states(rain_probability_sensor) | float | round(0) | int }}% exceeds threshold {{ rain_probability_threshold }}%.
+        {% else %}
+        {% endif %}
 
-  - repeat:
-      count: "{{ (irrigation_duration | int * 60 / 5) | int }}"
-      sequence:
-        - delay:
-            seconds: 5
-        - if:
-            - condition: template
-              value_template: >
-                {{ motion_sensor != '' and is_state(motion_sensor, 'on') }}
-          then:
-            - service: switch.turn_off
-              target:
-                entity_id: !input valve
-            - wait_template: "{{ is_state(motion_sensor, 'off') }}"
-              timeout:
-                minutes: 10
+  - if:
+      - condition: template
+        value_template: "{{ skip_reason | trim != '' }}"
+    then:
+      - service: persistent_notification.create
+        data:
+          title: "Irrigation skipped"
+          message: "{{ skip_reason | trim }}"
+          notification_id: "irrigation_skip"
+    else:
+      - service: switch.turn_on
+        target:
+          entity_id: !input valve
+
+      - repeat:
+          count: "{{ (irrigation_duration | int * 60 / 5) | int }}"
+          sequence:
             - delay:
-                seconds: !input debounce_seconds
-            - service: switch.turn_on
-              target:
-                entity_id: !input valve
+                seconds: 5
+            - if:
+                - condition: template
+                  value_template: >
+                    {{ motion_sensor != '' and is_state(motion_sensor, 'on') }}
+              then:
+                - service: switch.turn_off
+                  target:
+                    entity_id: !input valve
+                - wait_template: "{{ is_state(motion_sensor, 'off') }}"
+                  timeout:
+                    minutes: 10
+                - delay:
+                    seconds: !input debounce_seconds
+                - service: switch.turn_on
+                  target:
+                    entity_id: !input valve
 
-  - service: switch.turn_off
-    target:
-      entity_id: !input valve
+      - service: switch.turn_off
+        target:
+          entity_id: !input valve
 
 mode: single
 max_exceeded: silent
