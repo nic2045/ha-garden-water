@@ -1,38 +1,36 @@
 blueprint:
-  name: Gartenbewässerung mit DWD-Wettersteuerung
+  name: Garden Irrigation with DWD Weather Control
   description: >
-    Bewässert automatisch morgens und abends (nach Sonnenuntergang).
-    Überspringt die Bewässerung bei ausreichend Regen oder hoher Regenwahrscheinlichkeit.
-    Unterstützt Urlaubsmodus und optionalen Bewegungssensor mit Debounce.
+    Irrigates automatically in the morning and in the evening (after sunset).
+    Skips irrigation when enough rain has fallen or rain probability is high.
+    Supports vacation mode and an optional motion sensor with debounce.
   domain: automation
+  min_ha_version: "2026.1.0"
   input:
     ventil:
       name: Bewässerungsventil
-      description: Der Switch des SONOFF SWV
+      description: Switch entity of the SONOFF SWV valve
       selector:
         entity:
           domain: switch
 
     morgenzeit:
       name: Morgen-Bewässerungszeit
-      description: Uhrzeit für die morgendliche Bewässerung
+      description: Time for the morning irrigation run
       default: "06:00:00"
       selector:
         time:
 
     abend_offset:
-      name: Offset nach Sonnenuntergang (Minuten)
-      description: Wie viele Minuten nach Sonnenuntergang gegossen wird
-      default: 30
+      name: Offset nach Sonnenuntergang
+      description: "Offset after sunset in HH:MM:SS format (e.g. 00:30:00 for 30 minutes)"
+      default: "00:30:00"
       selector:
-        number:
-          min: 0
-          max: 120
-          unit_of_measurement: min
+        text:
 
     bewaesserungsdauer:
       name: Bewässerungsdauer (Minuten)
-      description: Wie lange das Ventil offen bleibt
+      description: How long the valve stays open (minutes)
       default: 15
       selector:
         number:
@@ -42,7 +40,7 @@ blueprint:
 
     regen_menge:
       name: Mindest-Regenmenge (mm)
-      description: Ab dieser Regenmenge heute wird NICHT gegossen
+      description: Irrigation is skipped when today's rainfall exceeds this threshold
       default: 5
       selector:
         number:
@@ -52,7 +50,7 @@ blueprint:
 
     regen_wahrscheinlichkeit:
       name: Regenwahrscheinlichkeit (%)
-      description: Ab dieser Wahrscheinlichkeit wird NICHT gegossen
+      description: Irrigation is skipped when rain probability exceeds this threshold
       default: 70
       selector:
         number:
@@ -62,7 +60,7 @@ blueprint:
 
     niederschlag_sensor:
       name: DWD Niederschlag-Sensor
-      description: Sensor für heute gefallenen Niederschlag
+      description: Sensor reporting today's accumulated precipitation
       default: sensor.berlin_marzahn_niederschlag
       selector:
         entity:
@@ -70,7 +68,7 @@ blueprint:
 
     wahrscheinlichkeit_sensor:
       name: DWD Regenwahrscheinlichkeit-Sensor
-      description: Sensor für Niederschlagswahrscheinlichkeit
+      description: Sensor reporting the precipitation probability
       default: sensor.berlin_marzahn_niederschlagswahrscheinlichkeit
       selector:
         entity:
@@ -78,7 +76,7 @@ blueprint:
 
     urlaub_boolean:
       name: Urlaubsmodus Helper
-      description: input_boolean.garten_urlaub — bei ON wird nicht gegossen
+      description: When ON, all irrigation is suppressed (input_boolean.garten_urlaub)
       default: input_boolean.garten_urlaub
       selector:
         entity:
@@ -86,8 +84,8 @@ blueprint:
 
     bewegungssensor:
       name: Bewegungssensor (optional)
-      description: Bei Bewegung wird das Ventil kurz pausiert
-      default: {}
+      description: When motion is detected the valve is paused until the area is clear
+      default: ""
       selector:
         entity:
           domain: binary_sensor
@@ -95,7 +93,7 @@ blueprint:
 
     debounce_sekunden:
       name: Debounce-Zeit (Sekunden)
-      description: Wie lange nach letzter Bewegung gewartet wird bevor Ventil wieder öffnet
+      description: Extra wait time after motion clears before reopening the valve
       default: 30
       selector:
         number:
@@ -148,12 +146,15 @@ action:
         - if:
             - condition: template
               value_template: >
-                {{ bewegungssensor != {} and is_state(bewegungssensor, 'on') }}
+                {{ bewegungssensor != '' and is_state(bewegungssensor, 'on') }}
           then:
             - service: switch.turn_off
               target:
                 entity_id: !input ventil
-            - wait_template: "{{ is_state(bewegungssensor, 'off') }}"
+            - wait_for_trigger:
+                - platform: state
+                  entity_id: "{{ bewegungssensor }}"
+                  to: "off"
               timeout:
                 minutes: 10
             - delay:
