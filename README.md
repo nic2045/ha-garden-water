@@ -43,6 +43,7 @@ Then restart HA.
 
 ## Requirements
 
-- [DWD Weather Integration (FL550)](https://github.com/FL550/dwd_weather) via HACS
+- A weather integration that provides a **precipitation sensor** (device class `precipitation`, unit mm) and a **precipitation probability sensor** (unit %)
+  - e.g. [DWD Weather (FL550)](https://github.com/FL550/dwd_weather), OpenWeatherMap, Met.no, Meteoblue
 - SONOFF SWV Zigbee water valve via ZHA
 - Home Assistant 2026.1.0 or newer
