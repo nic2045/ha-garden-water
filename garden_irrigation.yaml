@@ -2,6 +2,7 @@ blueprint:
   name: Automated Garden Irrigation
   description: >
     🌱 Never worry about watering your garden again!
+    v0.9.0 (build 260509)
 
     This blueprint triggers irrigation based on a HA Schedule helper —
     giving you full control over days and times directly in the HA UI.
