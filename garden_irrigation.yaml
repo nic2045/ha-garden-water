@@ -5,29 +5,31 @@ blueprint:
     Skips irrigation when enough rain has fallen or rain probability is high.
     Supports vacation mode and an optional motion sensor with debounce.
   domain: automation
+  homeassistant:
+    min_version: "2024.5.0"
   input:
-    ventil:
+    valve:
       name: Bewässerungsventil
       description: Switch entity of the SONOFF SWV valve
       selector:
         entity:
           domain: switch
 
-    morgenzeit:
+    morning_time:
       name: Morgen-Bewässerungszeit
       description: Time for the morning irrigation run
       default: "06:00:00"
       selector:
         time:
 
-    abend_offset:
+    sunset_offset:
       name: Offset nach Sonnenuntergang
       description: "Offset after sunset in HH:MM:SS format (e.g. 00:30:00 for 30 minutes)"
       default: "00:30:00"
       selector:
         text:
 
-    bewaesserungsdauer:
+    irrigation_duration:
       name: Bewässerungsdauer (Minuten)
       description: How long the valve stays open (minutes)
       default: 15
@@ -37,7 +39,7 @@ blueprint:
           max: 60
           unit_of_measurement: min
 
-    regen_menge:
+    rain_threshold:
       name: Mindest-Regenmenge (mm)
       description: Irrigation is skipped when today's rainfall exceeds this threshold
       default: 5
@@ -47,7 +49,7 @@ blueprint:
           max: 20
           unit_of_measurement: mm
 
-    regen_wahrscheinlichkeit:
+    rain_probability_threshold:
       name: Regenwahrscheinlichkeit (%)
       description: Irrigation is skipped when rain probability exceeds this threshold
       default: 70
@@ -57,7 +59,7 @@ blueprint:
           max: 100
           unit_of_measurement: "%"
 
-    niederschlag_sensor:
+    precipitation_sensor:
       name: Niederschlag-Sensor
       description: Sensor for accumulated precipitation in mm — shown by most weather integrations
       selector:
@@ -65,14 +67,14 @@ blueprint:
           domain: sensor
           device_class: precipitation
 
-    wahrscheinlichkeit_sensor:
+    rain_probability_sensor:
       name: Regenwahrscheinlichkeit-Sensor
       description: Sensor reporting precipitation probability in % (0–100)
       selector:
         entity:
           domain: sensor
 
-    urlaub_boolean:
+    vacation_boolean:
       name: Urlaubsmodus Helper
       description: When ON, all irrigation is suppressed (input_boolean.garten_urlaub)
       default: input_boolean.garten_urlaub
@@ -80,7 +82,7 @@ blueprint:
         entity:
           domain: input_boolean
 
-    bewegungssensor:
+    motion_sensor:
       name: Bewegungssensor (optional)
       description: When motion is detected the valve is paused until the area is clear
       default: ""
@@ -89,7 +91,7 @@ blueprint:
           domain: binary_sensor
           device_class: motion
 
-    debounce_sekunden:
+    debounce_seconds:
       name: Debounce-Zeit (Sekunden)
       description: Extra wait time after motion clears before reopening the valve
       default: 30
@@ -100,70 +102,70 @@ blueprint:
           unit_of_measurement: s
 
 variables:
-  ventil: !input ventil
-  bewaesserungsdauer: !input bewaesserungsdauer
-  regen_menge: !input regen_menge
-  regen_wahrscheinlichkeit: !input regen_wahrscheinlichkeit
-  niederschlag_sensor: !input niederschlag_sensor
-  wahrscheinlichkeit_sensor: !input wahrscheinlichkeit_sensor
-  urlaub_boolean: !input urlaub_boolean
-  bewegungssensor: !input bewegungssensor
-  debounce_sekunden: !input debounce_sekunden
+  valve: !input valve
+  irrigation_duration: !input irrigation_duration
+  rain_threshold: !input rain_threshold
+  rain_probability_threshold: !input rain_probability_threshold
+  precipitation_sensor: !input precipitation_sensor
+  rain_probability_sensor: !input rain_probability_sensor
+  vacation_boolean: !input vacation_boolean
+  motion_sensor: !input motion_sensor
+  debounce_seconds: !input debounce_seconds
 
 trigger:
   - platform: time
-    at: !input morgenzeit
-    id: morgen
+    at: !input morning_time
+    id: morning
 
   - platform: sun
     event: sunset
-    offset: !input abend_offset
-    id: abend
+    offset: !input sunset_offset
+    id: evening
 
 condition:
   - condition: state
-    entity_id: !input urlaub_boolean
+    entity_id: !input vacation_boolean
     state: "off"
   - condition: template
     value_template: >
-      {{ states(niederschlag_sensor) | float(0) < regen_menge | float }}
+      {{ states(precipitation_sensor) | float(0) < rain_threshold | float }}
   - condition: template
     value_template: >
-      {{ states(wahrscheinlichkeit_sensor) | float(0) < regen_wahrscheinlichkeit | float }}
+      {{ states(rain_probability_sensor) | float(0) < rain_probability_threshold | float }}
 
 action:
   - service: switch.turn_on
     target:
-      entity_id: !input ventil
+      entity_id: !input valve
 
   - repeat:
-      count: "{{ (bewaesserungsdauer | int * 60 / 5) | int }}"
+      count: "{{ (irrigation_duration | int * 60 / 5) | int }}"
       sequence:
         - delay:
             seconds: 5
         - if:
             - condition: template
               value_template: >
-                {{ bewegungssensor != '' and is_state(bewegungssensor, 'on') }}
+                {{ motion_sensor != '' and is_state(motion_sensor, 'on') }}
           then:
             - service: switch.turn_off
               target:
-                entity_id: !input ventil
+                entity_id: !input valve
             - wait_for_trigger:
                 - platform: state
-                  entity_id: "{{ bewegungssensor }}"
+                  entity_id: "{{ motion_sensor }}"
                   to: "off"
               timeout:
                 minutes: 10
             - delay:
-                seconds: !input debounce_sekunden
+                seconds: !input debounce_seconds
             - service: switch.turn_on
               target:
-                entity_id: !input ventil
+                entity_id: !input valve
 
   - service: switch.turn_off
     target:
-      entity_id: !input ventil
+      entity_id: !input valve
 
 mode: single
 max_exceeded: silent
