@@ -1,9 +1,10 @@
 blueprint:
-  name: Garden Irrigation with DWD Weather Control
+  name: Garden Irrigation with Weather Control
   description: >
-    Irrigates automatically in the morning and in the evening (after sunset).
+    Irrigates automatically based on a Schedule helper (any days and times).
     Skips irrigation when enough rain has fallen or rain probability is high.
     Supports vacation mode and an optional motion sensor with debounce.
+    Requires a Schedule helper created in Settings → Helpers → Schedule.
   domain: automation
   homeassistant:
     min_version: "2024.6.0"
@@ -18,25 +19,20 @@ blueprint:
     schedule_section:
       name: Schedule
       icon: mdi:clock-outline
-      description: When and how long to irrigate.
+      description: >
+        Select a Schedule helper that defines when to irrigate.
+        Create one in Settings → Helpers → Schedule.
       input:
-        morning_time:
-          name: Morgen-Bewässerungszeit
-          description: Time for the morning irrigation run
-          default: "06:00:00"
+        schedule_entity:
+          name: Bewässerungsplan
+          description: Schedule helper — defines irrigation days and times
           selector:
-            time:
-
-        sunset_offset:
-          name: Offset nach Sonnenuntergang
-          description: "Offset after sunset in HH:MM:SS format (e.g. 00:30:00 for 30 minutes)"
-          default: "00:30:00"
-          selector:
-            text:
+            entity:
+              domain: schedule
 
         irrigation_duration:
           name: Bewässerungsdauer (Minuten)
-          description: How long the valve stays open (minutes)
+          description: How long the valve stays open per irrigation run
           default: 15
           selector:
             number:
@@ -125,7 +121,6 @@ blueprint:
               unit_of_measurement: s
 
 variables:
-  valve: !input valve
   irrigation_duration: !input irrigation_duration
   rain_threshold: !input rain_threshold
   rain_probability_threshold: !input rain_probability_threshold
@@ -136,14 +131,9 @@ variables:
   debounce_seconds: !input debounce_seconds
 
 trigger:
-  - platform: time
-    at: !input morning_time
-    id: morning
-
-  - platform: sun
-    event: sunset
-    offset: !input sunset_offset
-    id: evening
+  - platform: state
+    entity_id: !input schedule_entity
+    to: "on"
 
 condition:
   - condition: template
@@ -151,10 +141,10 @@ condition:
       {{ vacation_boolean == '' or is_state(vacation_boolean, 'off') }}
   - condition: template
     value_template: >
-      {{ states(precipitation_sensor) | float(0) < rain_threshold | float }}
+      {{ precipitation_sensor == '' or states(precipitation_sensor) | float(0) < rain_threshold | float }}
   - condition: template
     value_template: >
-      {{ states(rain_probability_sensor) | float(0) < rain_probability_threshold | float }}
+      {{ rain_probability_sensor == '' or states(rain_probability_sensor) | float(0) < rain_probability_threshold | float }}
 
 action:
   - service: switch.turn_on

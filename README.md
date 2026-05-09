@@ -6,7 +6,7 @@ Home Assistant blueprints and helpers for smart garden irrigation.
 
 ```
 garden_irrigation.yaml    # Main blueprint
-garden_helper.yaml        # Input helpers for configuration.yaml
+garden_helper.yaml        # Optional: vacation mode helper
 ```
 
 ## Install blueprint
@@ -21,29 +21,34 @@ https://raw.githubusercontent.com/nic2045/ha-garden-water/main/garden_irrigation
 
 ## Set up helpers
 
-Add the contents of `garden_helper.yaml` to your `configuration.yaml`:
+**Required — Schedule helper:**
+1. Settings → Helpers → Create helper → Schedule
+2. Configure irrigation days and times (any combination, any number of slots)
+3. Select it in the blueprint as "Bewässerungsplan"
+
+**Optional — Vacation mode:**
+Add the contents of `garden_helper.yaml` to your `configuration.yaml` and restart HA:
 
 ```yaml
 input_boolean:
   garten_urlaub:
-    name: Garten Urlaubsmodus
+    name: Garden Vacation Mode
     icon: mdi:palm-tree
 ```
 
-Then restart HA.
-
 ## Features
 
-- Morning and evening irrigation (sunset + configurable offset)
-- DWD weather integration (rainfall amount + probability)
-- Vacation mode (input_boolean)
-- Optional motion sensor with debounce
+- Flexible scheduling via HA Schedule helper (any days, any number of times per day)
+- Weather-based skip logic (rainfall amount + probability) — optional
+- Vacation mode (input_boolean) — optional
+- Motion sensor with debounce — optional
 - All parameters configurable via UI
 - Multiple zones via multiple automations from the same blueprint
 
 ## Requirements
 
-- A weather integration that provides a **precipitation sensor** (device class `precipitation`, unit mm) and a **precipitation probability sensor** (unit %)
-  - e.g. [DWD Weather (FL550)](https://github.com/FL550/dwd_weather), OpenWeatherMap, Met.no, Meteoblue
+- Home Assistant 2024.6.0 or newer
+- A Schedule helper (Settings → Helpers → Schedule)
+- Any weather integration with precipitation and probability sensors (optional)
+  - e.g. [DWD Weather (FL550)](https://github.com/FL550/dwd_weather), OpenWeatherMap, Met.no
 - SONOFF SWV Zigbee water valve via ZHA
-- Home Assistant 2026.1.0 or newer
