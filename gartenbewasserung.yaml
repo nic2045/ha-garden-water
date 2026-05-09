@@ -60,7 +60,7 @@ blueprint:
 
     niederschlag_sensor:
       name: Niederschlag-Sensor
-      description: Sensor reporting today's accumulated precipitation in mm (device class: precipitation)
+      description: "Sensor reporting today's accumulated precipitation in mm (device class: precipitation)"
       selector:
         entity:
           domain: sensor
