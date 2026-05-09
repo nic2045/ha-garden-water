@@ -50,7 +50,7 @@ blueprint:
     min_version: "2024.6.0"
   input:
     valve:
-      name: "Bewässerungsventil *"
+      name: "Irrigation Valve *"
       description: The irrigation valve — accepts switch or valve entities (any manufacturer)
       selector:
         entity:
@@ -66,14 +66,14 @@ blueprint:
         Create one in Settings → Helpers → Schedule.
       input:
         schedule_entity:
-          name: "Bewässerungsplan *"
+          name: "Irrigation Schedule *"
           description: Schedule helper — defines irrigation days and times
           selector:
             entity:
               domain: schedule
 
         irrigation_duration:
-          name: Bewässerungsdauer (Minuten)
+          name: Irrigation Duration (minutes)
           description: How long the valve stays open per irrigation run
           default: 15
           selector:
@@ -88,7 +88,7 @@ blueprint:
       description: Sensors and thresholds for weather-based skip logic.
       input:
         precipitation_sensor:
-          name: Niederschlag-Sensor
+          name: Precipitation Sensor
           description: Sensor for accumulated precipitation in mm. Leave empty to always irrigate regardless of rainfall.
           default: ""
           selector:
@@ -96,7 +96,7 @@ blueprint:
               domain: sensor
 
         rain_threshold:
-          name: Mindest-Regenmenge (mm)
+          name: Minimum Rainfall (mm)
           description: Irrigation is skipped when today's rainfall exceeds this threshold
           default: 5
           selector:
@@ -106,7 +106,7 @@ blueprint:
               unit_of_measurement: mm
 
         rain_probability_sensor:
-          name: Regenwahrscheinlichkeit-Sensor
+          name: Rain Probability Sensor
           description: Sensor reporting precipitation probability in % (0–100). Leave empty to skip this check.
           default: ""
           selector:
@@ -114,7 +114,7 @@ blueprint:
               domain: sensor
 
         rain_probability_threshold:
-          name: Regenwahrscheinlichkeit (%)
+          name: Rain Probability Threshold (%)
           description: Irrigation is skipped when rain probability exceeds this threshold
           default: 70
           selector:
@@ -130,7 +130,7 @@ blueprint:
       collapsed: true
       input:
         vacation_boolean:
-          name: Urlaubsmodus Helper (optional)
+          name: Vacation Mode Helper (optional)
           description: When ON, all irrigation is suppressed. Leave empty to disable.
           default: ""
           selector:
@@ -144,7 +144,7 @@ blueprint:
       collapsed: true
       input:
         motion_sensor:
-          name: Bewegungssensor (optional)
+          name: Motion Sensor (optional)
           description: When motion is detected the valve is paused until the area is clear
           default: ""
           selector:
@@ -153,7 +153,7 @@ blueprint:
               device_class: motion
 
         debounce_seconds:
-          name: Debounce-Zeit (Sekunden)
+          name: Debounce Time (seconds)
           description: Extra wait time after motion clears before reopening the valve
           default: 30
           selector:
