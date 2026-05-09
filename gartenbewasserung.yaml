@@ -60,19 +60,21 @@ blueprint:
 
     niederschlag_sensor:
       name: DWD Niederschlag-Sensor
-      description: Sensor reporting today's accumulated precipitation
-      default: sensor.berlin_marzahn_niederschlag
+      description: Sensor reporting today's accumulated precipitation (from DWD integration)
       selector:
         entity:
-          domain: sensor
+          filter:
+            - integration: dwd_weather
+              domain: sensor
 
     wahrscheinlichkeit_sensor:
       name: DWD Regenwahrscheinlichkeit-Sensor
-      description: Sensor reporting the precipitation probability
-      default: sensor.berlin_marzahn_niederschlagswahrscheinlichkeit
+      description: Sensor reporting the precipitation probability (from DWD integration)
       selector:
         entity:
-          domain: sensor
+          filter:
+            - integration: dwd_weather
+              domain: sensor
 
     urlaub_boolean:
       name: Urlaubsmodus Helper
