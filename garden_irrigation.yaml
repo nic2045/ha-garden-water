@@ -4,7 +4,7 @@ blueprint:
     # 🌱 Automated Garden Irrigation
 
 
-    **Version: v0.9.1 (build 260510.1200)**
+    **Version: v0.9.2 (build 260510.2055)**
 
 
     Set it up once and your garden takes care of itself — whatever the weather. 🌦️
@@ -26,6 +26,11 @@ blueprint:
           - Skips irrigation when today's accumulated rainfall exceeds your threshold.
           - Skips when rain probability is too high.
           - Both weather sensors are optional — leave empty to always irrigate.
+
+      - **Skip if Already Watered:** 💧
+          - Skips if the valve already ran within a configurable time window.
+          - Optional minimum run duration — short accidental activations don't count.
+          - Optional helper entity to track duration of blueprint-controlled runs.
 
       - **Vacation Mode:** 🌴
           - One toggle suppresses all irrigation while you're away.
@@ -203,6 +208,53 @@ blueprint:
               max: 100
               unit_of_measurement: "%"
 
+    already_watered_section:
+      name: Skip if Already Watered
+      icon: mdi:water-check
+      description: >
+        Skips the run if the valve was already active within a recent time window.
+        Useful to prevent double-watering after a manual run.
+      collapsed: true
+      input:
+        skip_if_watered:
+          name: Enable "Skip if Already Watered"
+          description: When enabled, skips irrigation if the valve ran recently.
+          default: false
+          selector:
+            boolean:
+
+        watered_window_hours:
+          name: Skip Window (hours)
+          description: Skip if the valve was on within this many hours before the trigger.
+          default: 12
+          selector:
+            number:
+              min: 1
+              max: 48
+              unit_of_measurement: h
+
+        min_run_minutes:
+          name: Minimum Run Duration (minutes)
+          description: >
+            Only skip if the previous run lasted at least this long.
+            Requires the duration helper below — leave empty to count any activation.
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 60
+              unit_of_measurement: min
+
+        last_run_helper:
+          name: Last Run Duration Helper (optional)
+          description: >
+            Create an input_number helper (min 0, max 120, unit min) to track run duration.
+            The blueprint writes to it after each run. Leave empty to count any activation.
+          default: ""
+          selector:
+            entity:
+              domain: input_number
+
     vacation_section:
       name: Vacation Mode
       icon: mdi:palm-tree
@@ -267,6 +319,7 @@ blueprint:
             text:
 
 variables:
+  valve_entity: !input valve
   irrigation_duration: !input irrigation_duration
   rain_threshold: !input rain_threshold
   rain_probability_threshold: !input rain_probability_threshold
@@ -280,6 +333,10 @@ variables:
   sun_schedule_enabled: !input sun_schedule_enabled
   sunset_enabled: !input sunset_enabled
   sunrise_enabled: !input sunrise_enabled
+  skip_if_watered: !input skip_if_watered
+  watered_window_hours: !input watered_window_hours
+  min_run_minutes: !input min_run_minutes
+  last_run_helper: !input last_run_helper
 
 trigger:
   - platform: state
@@ -309,6 +366,10 @@ action:
       skip_reason: >
         {% if vacation_boolean != '' and is_state(vacation_boolean, 'on') %}
           Vacation mode is active.
+        {% elif skip_if_watered and
+            (now() - states[valve_entity].last_changed).total_seconds() < watered_window_hours | int * 3600 and
+            (last_run_helper == '' or states(last_run_helper) | float(0) >= min_run_minutes | float) %}
+          Already watered — last run was {{ ((now() - states[valve_entity].last_changed).total_seconds() / 60) | int }} min ago.
         {% elif precipitation_sensor != '' and states(precipitation_sensor) | float(0) >= rain_threshold | float %}
           Rainfall {{ states(precipitation_sensor) | float | round(1) }} mm exceeds threshold {{ rain_threshold }} mm.
         {% elif rain_probability_sensor != '' and states(rain_probability_sensor) | float(0) >= rain_probability_threshold | float %}
@@ -374,6 +435,16 @@ action:
       - service: switch.turn_off
         target:
           entity_id: !input valve
+
+      - if:
+          - condition: template
+            value_template: "{{ last_run_helper != '' }}"
+        then:
+          - service: input_number.set_value
+            target:
+              entity_id: !input last_run_helper
+            data:
+              value: "{{ irrigation_duration }}"
 
 mode: single
 max_exceeded: silent
