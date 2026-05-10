@@ -4,7 +4,7 @@ blueprint:
     # 🌱 Automated Garden Irrigation
 
 
-    **Version: v0.9.2 (build 260510.2055)**
+    **Version: v0.9.3 (build 260510.2142)**
 
 
     Set it up once and your garden takes care of itself — whatever the weather. 🌦️
@@ -17,24 +17,18 @@ blueprint:
           - Uses a HA Schedule helper for full control over days and times.
           - Any number of irrigation slots per day — configure directly in the HA UI, no blueprint changes needed.
 
-      - **Sun-Based Schedule:** 🌅
-          - Optionally trigger irrigation relative to **sunset** or **sunrise**.
-          - Configurable offset (before / after) per event — e.g. "30 min before sunset".
-          - Works independently alongside the Schedule helper.
-
       - **Weather Skip Logic:** 🌧️
           - Skips irrigation when today's accumulated rainfall exceeds your threshold.
           - Skips when rain probability is too high.
           - Both weather sensors are optional — leave empty to always irrigate.
 
-      - **Skip if Already Watered:** 💧
-          - Skips if the valve already ran within a configurable time window.
-          - Optional minimum run duration — short accidental activations don't count.
-          - Optional helper entity to track duration of blueprint-controlled runs.
+      - **Additional Triggers:** 🌅⏰
+          - Sun-based: trigger relative to sunset or sunrise with configurable offset.
+          - Override time: fixed daily time that bypasses all skip logic.
 
-      - **Vacation Mode:** 🌴
-          - One toggle suppresses all irrigation while you're away.
-          - Optional — leave empty to disable.
+      - **Skip Conditions:** 💧🌴
+          - Vacation mode: one toggle suppresses all irrigation while away.
+          - Skip if already watered: skips if the valve ran within a configurable time window.
 
       - **Motion Sensor Pause:** 🚶
           - Pauses the valve mid-run when motion is detected in the garden.
@@ -97,76 +91,6 @@ blueprint:
               max: 60
               unit_of_measurement: min
 
-    sun_schedule_section:
-      name: Sun-Based Schedule
-      icon: mdi:weather-sunset
-      description: >
-        Optionally trigger irrigation relative to sunset or sunrise.
-        These triggers are active **in addition** to the Schedule helper above.
-        Leave disabled if you only want schedule-based irrigation.
-      collapsed: true
-      input:
-        sun_schedule_enabled:
-          name: Enable Sun-Based Schedule
-          description: When enabled, the sunset and/or sunrise triggers below become active.
-          default: false
-          selector:
-            boolean:
-
-        sunset_enabled:
-          name: Trigger at Sunset
-          description: Start an irrigation run relative to sunset.
-          default: true
-          selector:
-            boolean:
-
-        sunset_offset:
-          name: Sunset Offset
-          description: When to start irrigation relative to sunset.
-          default: "-00:30:00"
-          selector:
-            select:
-              options:
-                - label: "2 hours before sunset"
-                  value: "-02:00:00"
-                - label: "1 hour before sunset"
-                  value: "-01:00:00"
-                - label: "30 min before sunset"
-                  value: "-00:30:00"
-                - label: "At sunset"
-                  value: "+00:00:00"
-                - label: "30 min after sunset"
-                  value: "+00:30:00"
-                - label: "1 hour after sunset"
-                  value: "+01:00:00"
-
-        sunrise_enabled:
-          name: Trigger at Sunrise
-          description: Start an irrigation run relative to sunrise.
-          default: false
-          selector:
-            boolean:
-
-        sunrise_offset:
-          name: Sunrise Offset
-          description: When to start irrigation relative to sunrise.
-          default: "+00:30:00"
-          selector:
-            select:
-              options:
-                - label: "1 hour before sunrise"
-                  value: "-01:00:00"
-                - label: "30 min before sunrise"
-                  value: "-00:30:00"
-                - label: "At sunrise"
-                  value: "+00:00:00"
-                - label: "30 min after sunrise"
-                  value: "+00:30:00"
-                - label: "1 hour after sunrise"
-                  value: "+01:00:00"
-                - label: "2 hours after sunrise"
-                  value: "+02:00:00"
-
     weather_section:
       name: Weather
       icon: mdi:weather-rainy
@@ -208,57 +132,96 @@ blueprint:
               max: 100
               unit_of_measurement: "%"
 
-    already_watered_section:
-      name: Skip if Already Watered
-      icon: mdi:water-check
+    additional_triggers_section:
+      name: Additional Triggers
+      icon: mdi:calendar-plus
       description: >
-        Skips the run if the valve was already active within a recent time window.
-        Useful to prevent double-watering after a manual run.
+        Optional extra triggers alongside the Schedule helper.
+        Sun-based triggers respect skip conditions. Override time bypasses them all.
       collapsed: true
       input:
-        skip_if_watered:
-          name: Enable "Skip if Already Watered"
-          description: When enabled, skips irrigation if the valve ran recently.
+        sun_schedule_enabled:
+          name: Enable Sun-Based Triggers
+          description: Trigger irrigation relative to sunset or sunrise.
           default: false
           selector:
             boolean:
 
-        watered_window_hours:
-          name: Skip Window (hours)
-          description: Skip if the valve was on within this many hours before the trigger.
-          default: 12
+        sunset_enabled:
+          name: "↳ Trigger at Sunset"
+          description: "Only applies when Sun-Based Triggers are enabled above."
+          default: true
           selector:
-            number:
-              min: 1
-              max: 48
-              unit_of_measurement: h
+            boolean:
 
-        min_run_minutes:
-          name: Minimum Run Duration (minutes)
+        sunset_offset:
+          name: "↳ Sunset Offset"
+          description: "Only applies when Trigger at Sunset is enabled."
+          default: "-00:30:00"
+          selector:
+            select:
+              options:
+                - label: "2 hours before sunset"
+                  value: "-02:00:00"
+                - label: "1 hour before sunset"
+                  value: "-01:00:00"
+                - label: "30 min before sunset"
+                  value: "-00:30:00"
+                - label: "At sunset"
+                  value: "+00:00:00"
+                - label: "30 min after sunset"
+                  value: "+00:30:00"
+                - label: "1 hour after sunset"
+                  value: "+01:00:00"
+
+        sunrise_enabled:
+          name: "↳ Trigger at Sunrise"
+          description: "Only applies when Sun-Based Triggers are enabled above."
+          default: false
+          selector:
+            boolean:
+
+        sunrise_offset:
+          name: "↳ Sunrise Offset"
+          description: "Only applies when Trigger at Sunrise is enabled."
+          default: "+00:30:00"
+          selector:
+            select:
+              options:
+                - label: "1 hour before sunrise"
+                  value: "-01:00:00"
+                - label: "30 min before sunrise"
+                  value: "-00:30:00"
+                - label: "At sunrise"
+                  value: "+00:00:00"
+                - label: "30 min after sunrise"
+                  value: "+00:30:00"
+                - label: "1 hour after sunrise"
+                  value: "+01:00:00"
+                - label: "2 hours after sunrise"
+                  value: "+02:00:00"
+
+        override_enabled:
+          name: Enable Override Time
           description: >
-            Only skip if the previous run lasted at least this long.
-            Requires the duration helper below — leave empty to count any activation.
-          default: 5
+            Fixed daily time that always irrigates — bypasses all skip logic
+            (weather, vacation, already watered). Useful for a guaranteed evening run.
+          default: false
           selector:
-            number:
-              min: 1
-              max: 60
-              unit_of_measurement: min
+            boolean:
 
-        last_run_helper:
-          name: Last Run Duration Helper (optional)
-          description: >
-            Create an input_number helper (min 0, max 120, unit min) to track run duration.
-            The blueprint writes to it after each run. Leave empty to count any activation.
-          default: ""
+        override_time:
+          name: "↳ Override Time"
+          description: "Only applies when Enable Override Time is on."
+          default: "19:00:00"
           selector:
-            entity:
-              domain: input_number
+            time:
 
-    vacation_section:
-      name: Vacation Mode
-      icon: mdi:palm-tree
-      description: Optional — suppresses all irrigation while away.
+    skip_conditions_section:
+      name: Skip Conditions
+      icon: mdi:cancel
+      description: >
+        Optional conditions that suppress irrigation beyond weather.
       collapsed: true
       input:
         vacation_boolean:
@@ -268,6 +231,43 @@ blueprint:
           selector:
             entity:
               domain: input_boolean
+
+        skip_if_watered:
+          name: Enable "Skip if Already Watered"
+          description: Skips irrigation if the valve already ran within a recent time window.
+          default: false
+          selector:
+            boolean:
+
+        watered_window_hours:
+          name: "↳ Skip Window (hours)"
+          description: "Only applies when Skip if Already Watered is enabled. Skip if the valve was on within this many hours."
+          default: 12
+          selector:
+            number:
+              min: 1
+              max: 48
+              unit_of_measurement: h
+
+        min_run_minutes:
+          name: "↳ Minimum Run Duration (minutes)"
+          description: "Only applies when Skip if Already Watered is enabled. Requires the duration helper below."
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 60
+              unit_of_measurement: min
+
+        last_run_helper:
+          name: "↳ Last Run Duration Helper (optional)"
+          description: >
+            Only applies when Skip if Already Watered is enabled.
+            Create an input_number helper (min 0, max 120, unit min) — the blueprint writes the duration here after each run.
+          default: ""
+          selector:
+            entity:
+              domain: input_number
 
     motion_section:
       name: Motion Sensor
@@ -285,8 +285,8 @@ blueprint:
               device_class: motion
 
         debounce_seconds:
-          name: Debounce Time (seconds)
-          description: Extra wait time after motion clears before reopening the valve
+          name: "↳ Debounce Time (seconds)"
+          description: "Only applies when a Motion Sensor is configured. Extra wait time after motion clears."
           default: 30
           selector:
             number:
@@ -310,10 +310,10 @@ blueprint:
             boolean:
 
         notify_service:
-          name: Notification target (optional)
+          name: "↳ Notification target (optional)"
           description: >
-            Additional notification service to call, e.g. notify.mobile_app_iphone
-            or notify.alexa_media_echo_dot. Leave empty for HA notifications only.
+            Only applies when notifications are enabled above.
+            Additional service e.g. notify.mobile_app_iphone or notify.alexa_media_echo_dot.
           default: ""
           selector:
             text:
@@ -337,6 +337,7 @@ variables:
   watered_window_hours: !input watered_window_hours
   min_run_minutes: !input min_run_minutes
   last_run_helper: !input last_run_helper
+  override_enabled: !input override_enabled
 
 trigger:
   - platform: state
@@ -354,17 +355,23 @@ trigger:
     offset: !input sunrise_offset
     id: sunrise
 
+  - platform: time
+    at: !input override_time
+    id: override
+
 action:
   - condition: template
     value_template: >
       {{ trigger.id == 'schedule' or
+         (override_enabled and trigger.id == 'override') or
          (sun_schedule_enabled and
           ((trigger.id == 'sunset' and sunset_enabled) or
            (trigger.id == 'sunrise' and sunrise_enabled))) }}
 
   - variables:
       skip_reason: >
-        {% if vacation_boolean != '' and is_state(vacation_boolean, 'on') %}
+        {% if trigger.id == 'override' %}
+        {% elif vacation_boolean != '' and is_state(vacation_boolean, 'on') %}
           Vacation mode is active.
         {% elif skip_if_watered and
             (now() - states[valve_entity].last_changed).total_seconds() < watered_window_hours | int * 3600 and
