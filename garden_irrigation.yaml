@@ -442,7 +442,7 @@ action:
         then:
           - service: input_number.set_value
             target:
-              entity_id: !input last_run_helper
+              entity_id: "{{ last_run_helper }}"
             data:
               value: "{{ irrigation_duration }}"
 
