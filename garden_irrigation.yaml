@@ -4,7 +4,7 @@ blueprint:
     # 🌱 Automated Garden Irrigation
 
 
-    **Version: v0.9.0 (build 260510.0044)**
+    **Version: v0.9.1 (build 260510.1200)**
 
 
     Set it up once and your garden takes care of itself — whatever the weather. 🌦️
@@ -16,6 +16,11 @@ blueprint:
       - **Schedule-Based Triggering:**
           - Uses a HA Schedule helper for full control over days and times.
           - Any number of irrigation slots per day — configure directly in the HA UI, no blueprint changes needed.
+
+      - **Sun-Based Schedule:** 🌅
+          - Optionally trigger irrigation relative to **sunset** or **sunrise**.
+          - Configurable offset (before / after) per event — e.g. "30 min before sunset".
+          - Works independently alongside the Schedule helper.
 
       - **Weather Skip Logic:** 🌧️
           - Skips irrigation when today's accumulated rainfall exceeds your threshold.
@@ -86,6 +91,76 @@ blueprint:
               min: 1
               max: 60
               unit_of_measurement: min
+
+    sun_schedule_section:
+      name: Sun-Based Schedule
+      icon: mdi:weather-sunset
+      description: >
+        Optionally trigger irrigation relative to sunset or sunrise.
+        These triggers are active **in addition** to the Schedule helper above.
+        Leave disabled if you only want schedule-based irrigation.
+      collapsed: true
+      input:
+        sun_schedule_enabled:
+          name: Enable Sun-Based Schedule
+          description: When enabled, the sunset and/or sunrise triggers below become active.
+          default: false
+          selector:
+            boolean:
+
+        sunset_enabled:
+          name: Trigger at Sunset
+          description: Start an irrigation run relative to sunset.
+          default: true
+          selector:
+            boolean:
+
+        sunset_offset:
+          name: Sunset Offset
+          description: When to start irrigation relative to sunset.
+          default: "-00:30:00"
+          selector:
+            select:
+              options:
+                - label: "2 hours before sunset"
+                  value: "-02:00:00"
+                - label: "1 hour before sunset"
+                  value: "-01:00:00"
+                - label: "30 min before sunset"
+                  value: "-00:30:00"
+                - label: "At sunset"
+                  value: "+00:00:00"
+                - label: "30 min after sunset"
+                  value: "+00:30:00"
+                - label: "1 hour after sunset"
+                  value: "+01:00:00"
+
+        sunrise_enabled:
+          name: Trigger at Sunrise
+          description: Start an irrigation run relative to sunrise.
+          default: false
+          selector:
+            boolean:
+
+        sunrise_offset:
+          name: Sunrise Offset
+          description: When to start irrigation relative to sunrise.
+          default: "+00:30:00"
+          selector:
+            select:
+              options:
+                - label: "1 hour before sunrise"
+                  value: "-01:00:00"
+                - label: "30 min before sunrise"
+                  value: "-00:30:00"
+                - label: "At sunrise"
+                  value: "+00:00:00"
+                - label: "30 min after sunrise"
+                  value: "+00:30:00"
+                - label: "1 hour after sunrise"
+                  value: "+01:00:00"
+                - label: "2 hours after sunrise"
+                  value: "+02:00:00"
 
     weather_section:
       name: Weather
@@ -202,13 +277,34 @@ variables:
   debounce_seconds: !input debounce_seconds
   notify_on_skip: !input notify_on_skip
   notify_service: !input notify_service
+  sun_schedule_enabled: !input sun_schedule_enabled
+  sunset_enabled: !input sunset_enabled
+  sunrise_enabled: !input sunrise_enabled
 
 trigger:
   - platform: state
     entity_id: !input schedule_entity
     to: "on"
+    id: schedule
+
+  - platform: sun
+    event: sunset
+    offset: !input sunset_offset
+    id: sunset
+
+  - platform: sun
+    event: sunrise
+    offset: !input sunrise_offset
+    id: sunrise
 
 action:
+  - condition: template
+    value_template: >
+      {{ trigger.id == 'schedule' or
+         (sun_schedule_enabled and
+          ((trigger.id == 'sunset' and sunset_enabled) or
+           (trigger.id == 'sunrise' and sunrise_enabled))) }}
+
   - variables:
       skip_reason: >
         {% if vacation_boolean != '' and is_state(vacation_boolean, 'on') %}
