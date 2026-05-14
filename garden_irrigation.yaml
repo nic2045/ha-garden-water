@@ -4,7 +4,7 @@ blueprint:
     # 🌱 Automated Garden Irrigation
 
 
-    **Version: v0.9.5 (build 260514.1400)**
+    **Version: v0.9.6 (build 260514.1500)**
 
 
     Set it up once and your garden takes care of itself — whatever the weather. 🌦️
@@ -149,13 +149,28 @@ blueprint:
           name: "↳ Weather Entity — Hourly (optional)"
           description: >
             Optional second weather entity providing hourly forecast data
-            (e.g. a DWD measurement station). When set, the blueprint sums all hourly
-            precipitation for today and uses that instead of the daily forecast value —
-            giving a more accurate picture of today's actual + expected rainfall.
+            (e.g. a DWD measurement station). When set, the blueprint sums precipitation
+            over the forecast window below and uses that instead of the daily forecast value.
           default: ""
           selector:
             entity:
               domain: weather
+
+        forecast_window_hours:
+          name: "↳ Forecast Window (hours)"
+          description: >
+            Only applies when a Hourly Weather Entity is selected.
+            Sum precipitation forecast over this many hours from now.
+            Set this to match your watering interval — e.g. 24 h for a daily schedule,
+            48 h if you water every other day. This answers the question:
+            "Will it rain enough before the next watering is due?"
+          default: 24
+          selector:
+            number:
+              min: 6
+              max: 72
+              step: 6
+              unit_of_measurement: h
 
         forecast_rain_threshold:
           name: "↳ Combined Rain Threshold (mm)"
@@ -410,6 +425,7 @@ variables:
   override_enabled: !input override_enabled
   weather_entity: !input weather_entity
   hourly_weather_entity: !input hourly_weather_entity
+  forecast_window_hours: !input forecast_window_hours
   forecast_rain_threshold: !input forecast_rain_threshold
   temperature_scaling_enabled: !input temperature_scaling_enabled
   high_temp_threshold: !input high_temp_threshold
@@ -475,11 +491,11 @@ action:
       - variables:
           hourly_precipitation_today: >
             {% set ns = namespace(total=0) %}
-            {% set day_start = as_timestamp(now().strftime('%Y-%m-%d') + 'T00:00:00') %}
-            {% set day_end = day_start + 86400 %}
+            {% set now_ts = as_timestamp(now()) %}
+            {% set window_end = now_ts + forecast_window_hours | int * 3600 %}
             {% for hour in hourly_forecast_raw[hourly_weather_entity].forecast %}
               {% set ts = as_timestamp(hour.datetime) %}
-              {% if ts >= day_start and ts < day_end %}
+              {% if ts >= now_ts and ts < window_end %}
                 {% set ns.total = ns.total + hour.precipitation | float(0) %}
               {% endif %}
             {% endfor %}
@@ -502,7 +518,7 @@ action:
              + (hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation)) >= forecast_rain_threshold | float %}
           {% set actual = (states(precipitation_sensor) | float(0) if precipitation_sensor != '' else 0) %}
           {% set rain_fc = hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation %}
-          Combined rain {{ (actual + rain_fc) | round(1) }} mm ({{ actual | round(1) }} mm actual + {{ rain_fc | round(1) }} mm {% if hourly_weather_entity != '' %}hourly{% else %}daily{% endif %} forecast) exceeds threshold {{ forecast_rain_threshold }} mm.
+          Combined rain {{ (actual + rain_fc) | round(1) }} mm ({{ actual | round(1) }} mm actual + {{ rain_fc | round(1) }} mm {% if hourly_weather_entity != '' %}forecast next {{ forecast_window_hours }} h{% else %}daily forecast{% endif %}) exceeds threshold {{ forecast_rain_threshold }} mm.
         {% elif precipitation_sensor != '' and states(precipitation_sensor) | float(0) >= rain_threshold | float %}
           Rainfall {{ states(precipitation_sensor) | float | round(1) }} mm exceeds threshold {{ rain_threshold }} mm.
         {% elif rain_probability_sensor != '' and states(rain_probability_sensor) | float(0) >= rain_probability_threshold | float %}

@@ -4,7 +4,7 @@
 
 ### Features
 - **Weather entity support**: select any HA weather entity (DWD, OpenWeatherMap, Met.no, …) — the blueprint fetches the daily forecast via `weather.get_forecasts` and combines actual rainfall + expected precipitation into a single skip decision
-- **Hourly weather entity**: optional second weather entity with hourly forecasts (e.g. a DWD measurement station) — the blueprint sums all hourly precipitation values for today, giving a more accurate picture than a single daily value; replaces the daily forecast component when set
+- **Hourly weather entity + forecast window**: optional second weather entity with hourly forecasts (e.g. a DWD measurement station) — the blueprint sums precipitation over a configurable time window (default 24 h, adjustable 6–72 h) starting from now; set the window to match your watering interval to answer "will it rain enough before the next scheduled run?" Replaces the daily forecast component when set
 - **Temperature-based duration scaling**: when forecast temperature exceeds a configurable threshold, irrigation duration is multiplied by a configurable factor (e.g. 1.5× at >30 °C) — effective duration is also written to the `last_run_helper`
 - All features are fully optional — existing setups with only precipitation/probability sensors are unaffected
 
