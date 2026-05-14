@@ -298,6 +298,22 @@ blueprint:
             entity:
               domain: schedule
 
+        override_enabled:
+          name: Override Time (optional)
+          description: >
+            Single fixed daily time that always irrigates, bypassing all skip logic.
+            Use this instead of the Override Schedule above for a simple single-slot override.
+          default: false
+          selector:
+            boolean:
+
+        override_time:
+          name: "↳ Override Time"
+          description: "Only applies when Override Time is enabled above."
+          default: "19:00:00"
+          selector:
+            time:
+
     skip_conditions_section:
       name: Skip Conditions
       icon: mdi:cancel
@@ -419,6 +435,7 @@ variables:
   min_run_minutes: !input min_run_minutes
   last_run_helper: !input last_run_helper
   override_schedule: !input override_schedule
+  override_enabled: !input override_enabled
   weather_entity: !input weather_entity
   hourly_weather_entity: !input hourly_weather_entity
   forecast_window_hours: !input forecast_window_hours
@@ -446,13 +463,18 @@ trigger:
   - platform: state
     entity_id: !input override_schedule
     to: "on"
-    id: override
+    id: override_schedule
+
+  - platform: time
+    at: !input override_time
+    id: override_time
 
 action:
   - condition: template
     value_template: >
       {{ trigger.id == 'schedule' or
-         (override_schedule != '' and trigger.id == 'override') or
+         (override_schedule != '' and trigger.id == 'override_schedule') or
+         (override_enabled and trigger.id == 'override_time') or
          (sun_schedule_enabled and
           ((trigger.id == 'sunset' and sunset_enabled) or
            (trigger.id == 'sunrise' and sunrise_enabled))) }}
@@ -503,7 +525,7 @@ action:
 
   - variables:
       skip_reason: >
-        {% if trigger.id == 'override' %}
+        {% if trigger.id in ['override_schedule', 'override_time'] %}
         {% elif vacation_boolean != '' and is_state(vacation_boolean, 'on') %}
           Vacation mode is active.
         {% elif skip_if_watered and
