@@ -222,7 +222,7 @@ blueprint:
       icon: mdi:calendar-plus
       description: >
         Optional extra triggers alongside the Schedule helper.
-        Sun-based triggers respect skip conditions. Override time bypasses them all.
+        Sun-based triggers respect skip conditions. Override schedule bypasses them all.
       collapsed: true
       input:
         sun_schedule_enabled:
@@ -286,21 +286,17 @@ blueprint:
                 - label: "2 hours after sunrise"
                   value: "+02:00:00"
 
-        override_enabled:
-          name: Enable Override Time
+        override_schedule:
+          name: Override Schedule (optional)
           description: >
-            Fixed daily time that always irrigates — bypasses all skip logic
-            (weather, vacation, already watered). Useful for a guaranteed evening run.
-          default: false
+            A second Schedule helper whose time slots always trigger irrigation,
+            bypassing all skip conditions (weather, vacation, already watered).
+            Configure any number of slots directly in the HA UI — no limit.
+            Leave empty to disable.
+          default: ""
           selector:
-            boolean:
-
-        override_time:
-          name: "↳ Override Time"
-          description: "Only applies when Enable Override Time is on."
-          default: "19:00:00"
-          selector:
-            time:
+            entity:
+              domain: schedule
 
     skip_conditions_section:
       name: Skip Conditions
@@ -422,7 +418,7 @@ variables:
   watered_window_hours: !input watered_window_hours
   min_run_minutes: !input min_run_minutes
   last_run_helper: !input last_run_helper
-  override_enabled: !input override_enabled
+  override_schedule: !input override_schedule
   weather_entity: !input weather_entity
   hourly_weather_entity: !input hourly_weather_entity
   forecast_window_hours: !input forecast_window_hours
@@ -447,15 +443,16 @@ trigger:
     offset: !input sunrise_offset
     id: sunrise
 
-  - platform: time
-    at: !input override_time
+  - platform: state
+    entity_id: !input override_schedule
+    to: "on"
     id: override
 
 action:
   - condition: template
     value_template: >
       {{ trigger.id == 'schedule' or
-         (override_enabled and trigger.id == 'override') or
+         (override_schedule != '' and trigger.id == 'override') or
          (sun_schedule_enabled and
           ((trigger.id == 'sunset' and sunset_enabled) or
            (trigger.id == 'sunrise' and sunrise_enabled))) }}
