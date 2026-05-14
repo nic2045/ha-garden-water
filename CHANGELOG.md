@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-05-14
+
+### Features
+- **Weather entity support**: select any HA weather entity (DWD, OpenWeatherMap, Met.no, …) — the blueprint fetches the daily forecast via `weather.get_forecasts` and combines actual rainfall + expected precipitation into a single skip decision
+- **Temperature-based duration scaling**: when forecast temperature exceeds a configurable threshold, irrigation duration is multiplied by a configurable factor (e.g. 1.5× at >30 °C) — effective duration is also written to the `last_run_helper`
+- Both features are fully optional — existing setups with only precipitation/probability sensors are unaffected
+
+---
+
 ## 2026-05-10
 
 ### Features
