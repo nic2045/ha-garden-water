@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C ~/dotfiles add setup.sh)",
+      "Bash(git -C ~/dotfiles commit -m \"update setup.sh with actual local repo paths\")",
+      "Bash(git -C ~/dotfiles commit -m \"fix repo paths: all under ~/Coding/\")",
+      "Bash(bash ~/dotfiles/setup.sh)",
+      "Bash(git -C ~/dotfiles add README.md)",
+      "Bash(git -C ~/dotfiles commit -m \"add README with setup guide and roadmap\")",
+      "Bash(chmod +x ~/dotfiles/add-project.sh)",
+      "Bash(git -C ~/dotfiles add add-project.sh)",
+      "Bash(git -C ~/dotfiles commit -m \"add add-project.sh script\")",
+      "Bash(mkdir -p ~/.git-templates/hooks)",
+      "Bash(chmod +x ~/.git-templates/hooks/post-checkout)",
+      "Bash(git config *)",
+      "Bash(git -C /Users/NicO/Coding/ha-garden-water log --pretty=format:\"%ad %s\" --date=short)",
+      "Bash(git -C /Users/NicO/Coding/ha-garden-water add CHANGELOG.md)",
+      "Bash(git -C /Users/NicO/Coding/ha-garden-water commit -m \"docs: restructure CHANGELOG by date\")",
+      "Bash(git -C /Users/NicO/Coding/ha-garden-water commit -m ' *)",
+      "Bash(git -C /Users/NicO/Coding/ha-garden-water commit -m \"chore: enable skip notifications by default\")"
+    ],
+    "additionalDirectories": [
+      "/Users/NicO/.git-templates"
+    ]
+  }
+}
