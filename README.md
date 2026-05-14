@@ -18,7 +18,8 @@ Home Assistant blueprint for smart, weather-aware garden irrigation.
 ### 📅 Scheduling
 - **Schedule helper** — any days, any number of time slots per day; configured entirely in the HA UI
 - **Sun-based triggers** — trigger relative to sunset or sunrise with configurable offset
-- **Override time** — fixed daily time that always runs, bypassing all skip conditions
+- **Override time** — single fixed daily time that always runs, bypassing all skip conditions
+- **Override schedule** — alternative: a second Schedule helper with any number of override slots
 
 ### 💧 Skip Conditions
 - **Weather skip** — skip when rainfall + forecast exceeds your threshold
@@ -26,7 +27,7 @@ Home Assistant blueprint for smart, weather-aware garden irrigation.
 - **Vacation mode** — one toggle suppresses all irrigation while away
 
 ### 🔔 Monitoring
-- **Skip notifications** — every skipped run is logged to the HA Logbook with the reason; optional push notification to HA app, mobile (iOS/Android), or Alexa
+- **Skip notifications** — every skipped run is logged to the HA Logbook with the reason; optional push notification to HA app, mobile (iOS/Android), or Alexa (opt-in, off by default)
 - **Motion sensor pause** — pauses the valve mid-run when motion is detected; resumes automatically after the area clears
 
 ### 🏡 Multi-zone
