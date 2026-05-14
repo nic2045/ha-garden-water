@@ -2,7 +2,7 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 ![HA Version](https://img.shields.io/badge/Home%20Assistant-2024.6%2B-blue?logo=homeassistant)
-[![HACS Validation](https://github.com/nic2045/ha-garden-water/actions/workflows/hacs.yaml/badge.svg)](https://github.com/nic2045/ha-garden-water/actions/workflows/hacs.yaml)
+[![Blueprint Validation](https://github.com/nic2045/ha-garden-water/actions/workflows/hacs.yaml/badge.svg)](https://github.com/nic2045/ha-garden-water/actions/workflows/hacs.yaml)
 
 Home Assistant blueprints and helpers for smart garden irrigation.
 
