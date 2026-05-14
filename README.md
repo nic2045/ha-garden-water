@@ -26,12 +26,12 @@ Home Assistant blueprint for smart, weather-aware garden irrigation.
 - **Skip if already watered** — suppresses re-irrigation within a configurable time window
 - **Vacation mode** — one toggle suppresses all irrigation while away
 
-### 🔔 Monitoring
+### 🔔 Notifications
 - **Skip notifications** — every skipped run is logged to the HA Logbook with the reason; optional push notification to HA app, mobile (iOS/Android), or Alexa (opt-in, off by default)
-- **Motion sensor pause** — pauses the valve mid-run when motion is detected; resumes automatically after the area clears
 
-### 🏡 Multi-zone
-- One blueprint, one automation per valve — independent settings per zone
+### ⚙️ Additional Features
+- **Motion sensor pause** — pauses the valve mid-run when motion is detected; resumes automatically after the area clears
+- **Multiple zones** — one blueprint, one automation per valve; independent settings per zone
 
 ---
 
