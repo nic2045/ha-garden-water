@@ -222,9 +222,25 @@ blueprint:
       icon: mdi:calendar-plus
       description: >
         Optional extra triggers alongside the Schedule helper.
-        Sun-based triggers respect skip conditions. Override schedule bypasses them all.
+        Sun-based triggers respect skip conditions. Override triggers bypass them all.
       collapsed: true
       input:
+        override_enabled:
+          name: Enable Override Time
+          description: >
+            Fixed daily time that always irrigates — bypasses all skip logic
+            (weather, vacation, already watered).
+          default: false
+          selector:
+            boolean:
+
+        override_time:
+          name: "↳ Override Time"
+          description: "Only applies when Enable Override Time is on."
+          default: "19:00:00"
+          selector:
+            time:
+
         sun_schedule_enabled:
           name: Enable Sun-Based Triggers
           description: Trigger irrigation relative to sunset or sunrise.
@@ -286,33 +302,25 @@ blueprint:
                 - label: "2 hours after sunrise"
                   value: "+02:00:00"
 
+    override_schedule_section:
+      name: Override — Multiple Slots
+      icon: mdi:calendar-multiple
+      description: >
+        Alternative to the single Override Time above.
+        Select a second Schedule helper to define any number of override slots.
+        Each slot always triggers irrigation, bypassing all skip conditions.
+        Leave empty to disable.
+      collapsed: true
+      input:
         override_schedule:
           name: Override Schedule (optional)
           description: >
-            A second Schedule helper whose time slots always trigger irrigation,
-            bypassing all skip conditions (weather, vacation, already watered).
-            Configure any number of slots directly in the HA UI — no limit.
-            Leave empty to disable.
+            Second Schedule helper for override runs. Configure slots in
+            Settings → Helpers → Schedule. Leave empty to disable.
           default: ""
           selector:
             entity:
               domain: schedule
-
-        override_enabled:
-          name: Override Time (optional)
-          description: >
-            Single fixed daily time that always irrigates, bypassing all skip logic.
-            Use this instead of the Override Schedule above for a simple single-slot override.
-          default: false
-          selector:
-            boolean:
-
-        override_time:
-          name: "↳ Override Time"
-          description: "Only applies when Override Time is enabled above."
-          default: "19:00:00"
-          selector:
-            time:
 
     skip_conditions_section:
       name: Skip Conditions
