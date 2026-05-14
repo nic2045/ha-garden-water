@@ -388,9 +388,9 @@ blueprint:
       collapsed: true
       input:
         notify_on_skip:
-          name: Notify when irrigation is skipped
-          description: Sends a notification whenever a run is skipped (weather, vacation).
-          default: true
+          name: Enable skip notifications
+          description: When enabled, sends a notification whenever a run is skipped. Skipped runs are always logged to the HA Logbook regardless of this setting.
+          default: false
           selector:
             boolean:
 
