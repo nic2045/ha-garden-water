@@ -11,9 +11,9 @@ garden_helper.yaml        # Optional: vacation mode helper
 
 ## Install blueprint
 
-In Home Assistant:
-1. Settings → Automations → Blueprints → Import blueprint
-2. Enter URL:
+[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2Fnic2045%2Fha-garden-water%2Fmain%2Fgarden_irrigation.yaml)
+
+Or manually: Settings → Automations → Blueprints → Import blueprint → paste URL:
 
 ```
 https://raw.githubusercontent.com/nic2045/ha-garden-water/main/garden_irrigation.yaml
