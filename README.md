@@ -24,7 +24,7 @@ https://raw.githubusercontent.com/nic2045/ha-garden-water/main/garden_irrigation
 **Required — Schedule helper:**
 1. Settings → Helpers → Create helper → Schedule
 2. Configure irrigation days and times (any combination, any number of slots)
-3. Select it in the blueprint as "Bewässerungsplan"
+3. Select it in the blueprint as the irrigation schedule
 
 **Optional — Vacation mode:**
 Add the contents of `garden_helper.yaml` to your `configuration.yaml` and restart HA:
@@ -38,19 +38,39 @@ input_boolean:
 
 ## Features
 
-- Flexible scheduling via HA Schedule helper (any days, any number of times per day)
-- Weather-based skip logic (rainfall amount + probability) — optional
-- **Weather entity support**: point your HA weather entity (DWD, OpenWeatherMap, Met.no, …) at the blueprint — it fetches the daily forecast and combines actual + expected rain for a smarter skip decision
-- **Temperature-based duration scaling**: irrigate longer on hot days — configurable threshold and multiplier
-- Vacation mode (input_boolean) — optional
-- Motion sensor with debounce — optional
-- All parameters configurable via UI
-- Multiple zones via multiple automations from the same blueprint
+- **Flexible scheduling** via HA Schedule helper — any days, any number of time slots per day
+- **Weather-based skip logic** — optional rainfall amount and probability sensors
+- **Daily weather entity** (DWD, OpenWeatherMap, Met.no, …) — combines actual + forecast precipitation for a smarter skip decision
+- **Hourly weather entity** (e.g. DWD measurement station) — sums precipitation over a configurable forecast window to answer: *"Will it rain enough before the next watering is due?"*
+- **Temperature-based duration scaling** — irrigate longer on hot days (configurable threshold and multiplier)
+- **Sun-based triggers** — trigger relative to sunset or sunrise with configurable offset
+- **Override time** — fixed daily time that bypasses all skip conditions
+- **Skip if already watered** — suppresses re-irrigation within a configurable time window
+- **Vacation mode** — one toggle suppresses all irrigation while away
+- **Motion sensor pause** — pauses the valve mid-run, resumes automatically after the area clears
+- **Skip notifications** — every skipped run is logged to the HA Logbook; optional push notification to HA, mobile app, or Alexa
+- **Multiple zones** — one blueprint, one automation per valve
+
+## Weather integration
+
+The blueprint supports three levels of weather intelligence, which can be combined:
+
+| Input | What it does |
+|---|---|
+| Precipitation sensor | Any sensor reporting today's accumulated rainfall in mm |
+| Rain probability sensor | Any sensor reporting precipitation probability in % |
+| **Weather Entity — Daily** | Fetches daily forecast via `weather.get_forecasts`; combines actual + forecast rain for the skip decision; also used for temperature-based duration scaling |
+| **↳ Weather Entity — Hourly** | Fetches hourly forecast; sums precipitation over a configurable window (6–72 h) from now — set to your watering interval |
+| **↳ Forecast Window** | How many hours ahead to sum (default 24 h for daily schedules, 48 h for every-other-day) |
+
+**Recommended setup with DWD:**
+- Daily: `weather.wettervorhersage_home` (Met.no — built-in, no extra install)
+- Hourly: `weather.wetterstation_*` (DWD measurement station via HACS DWD Weather)
 
 ## Requirements
 
 - Home Assistant 2024.6.0 or newer
 - A Schedule helper (Settings → Helpers → Schedule)
-- Any weather integration with precipitation and probability sensors (optional)
+- Any weather integration with precipitation/probability sensors (optional)
   - e.g. [DWD Weather (FL550)](https://github.com/FL550/dwd_weather), OpenWeatherMap, Met.no
-- SONOFF SWV Zigbee water valve via ZHA
+- Switch or valve entity for the irrigation valve (any manufacturer)
