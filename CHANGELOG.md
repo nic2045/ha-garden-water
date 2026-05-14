@@ -10,12 +10,8 @@
 
 ### Inspiration & credit
 
-This entire weather integration was inspired by a brilliant community solution shared in the
-[simon42.com forum](https://community.simon42.com/t/wetterdaten-rasensprenger-benoetige-hilfe/28167/6).
-The author had already built a sophisticated multi-condition automation that combined actual
-rainfall, temperature tiers, days since last watering, and `weather.get_forecasts` — long before
-this blueprint supported any of it. A big thank you for sharing that work openly: it directly
-shaped what v0.9.4–v0.9.6 became. Great thinking, great execution. 🌱
+Weather integration inspired by a brilliant community solution — thank you for sharing it openly. 🌱
+https://community.simon42.com/t/wetterdaten-rasensprenger-benoetige-hilfe/28167
 
 ---
 
