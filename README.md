@@ -1,6 +1,5 @@
 # ha-garden-water
 
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 ![HA Version](https://img.shields.io/badge/Home%20Assistant-2024.6%2B-blue?logo=homeassistant)
 [![Blueprint Validation](https://github.com/nic2045/ha-garden-water/actions/workflows/hacs.yaml/badge.svg)](https://github.com/nic2045/ha-garden-water/actions/workflows/hacs.yaml)
 
@@ -14,11 +13,6 @@ garden_helper.yaml        # Optional: vacation mode helper
 ```
 
 ## Install blueprint
-
-**Via HACS (recommended):**
-1. HACS → Blueprints → ⋮ → Custom repositories
-2. Add `https://github.com/nic2045/ha-garden-water` — category: **Blueprint**
-3. Download the blueprint from HACS — updates are notified automatically
 
 **One-click import:**
 
