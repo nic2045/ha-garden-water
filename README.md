@@ -40,6 +40,8 @@ input_boolean:
 
 - Flexible scheduling via HA Schedule helper (any days, any number of times per day)
 - Weather-based skip logic (rainfall amount + probability) — optional
+- **Weather entity support**: point your HA weather entity (DWD, OpenWeatherMap, Met.no, …) at the blueprint — it fetches the daily forecast and combines actual + expected rain for a smarter skip decision
+- **Temperature-based duration scaling**: irrigate longer on hot days — configurable threshold and multiplier
 - Vacation mode (input_boolean) — optional
 - Motion sensor with debounce — optional
 - All parameters configurable via UI
