@@ -4,7 +4,7 @@ blueprint:
     # 🌱 Automated Garden Irrigation
 
 
-    **Version: v0.9.3 (build 260510.2142)**
+    **Version: v0.9.7 (build 260514.1800)**
 
 
     Set it up once and your garden takes care of itself — whatever the weather. 🌦️
@@ -20,7 +20,9 @@ blueprint:
       - **Weather Skip Logic:** 🌧️
           - Skips irrigation when today's accumulated rainfall exceeds your threshold.
           - Skips when rain probability is too high.
-          - Both weather sensors are optional — leave empty to always irrigate.
+          - **Weather entity support:** combine actual rainfall + daily forecast precipitation for a smarter skip decision (works with DWD, OpenWeatherMap, Met.no, etc.).
+          - **Temperature-based duration scaling:** irrigate longer on hot days — configurable threshold and multiplier.
+          - All weather sensors are optional — leave empty to always irrigate.
 
       - **Additional Triggers:** 🌅⏰
           - Sun-based: trigger relative to sunset or sunrise with configurable offset.
@@ -132,14 +134,113 @@ blueprint:
               max: 100
               unit_of_measurement: "%"
 
+        weather_entity:
+          name: Weather Entity — Daily (optional)
+          description: >
+            Select your HA weather entity (e.g. weather.forecast_home or weather.dwd_weather_home)
+            to use daily forecast data. When set, actual rainfall + forecast precipitation are
+            combined for the skip decision. Leave empty to use only the sensors above.
+          default: ""
+          selector:
+            entity:
+              domain: weather
+
+        hourly_weather_entity:
+          name: "↳ Weather Entity — Hourly (optional)"
+          description: >
+            Optional second weather entity providing hourly forecast data
+            (e.g. a DWD measurement station). When set, the blueprint sums precipitation
+            over the forecast window below and uses that instead of the daily forecast value.
+          default: ""
+          selector:
+            entity:
+              domain: weather
+
+        forecast_window_hours:
+          name: "↳ Forecast Window (hours)"
+          description: >
+            Only applies when a Hourly Weather Entity is selected.
+            Sum precipitation forecast over this many hours from now.
+            Set this to match your watering interval — e.g. 24 h for a daily schedule,
+            48 h if you water every other day. This answers the question:
+            "Will it rain enough before the next watering is due?"
+          default: 24
+          selector:
+            number:
+              min: 6
+              max: 72
+              step: 6
+              unit_of_measurement: h
+
+        forecast_rain_threshold:
+          name: "↳ Combined Rain Threshold (mm)"
+          description: >
+            Only applies when a Weather Entity is selected.
+            Irrigation is skipped when actual rainfall + forecast precipitation ≥ this value.
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 50
+              unit_of_measurement: mm
+
+        temperature_scaling_enabled:
+          name: "↳ Temperature-Based Duration Scaling"
+          description: >
+            Only applies when a Weather Entity is selected.
+            Increases irrigation duration when today's forecast temperature is high.
+          default: false
+          selector:
+            boolean:
+
+        high_temp_threshold:
+          name: "↳ High Temperature Threshold (°C)"
+          description: >
+            Only applies when Temperature Scaling is enabled.
+            Above this temperature the duration is multiplied by the factor below.
+          default: 30
+          selector:
+            number:
+              min: 15
+              max: 45
+              unit_of_measurement: "°C"
+
+        high_temp_factor:
+          name: "↳ Duration Multiplier at High Temperature"
+          description: >
+            Only applies when Temperature Scaling is enabled.
+            Example: 1.5 = 50% longer when it's hot.
+          default: 1.5
+          selector:
+            number:
+              min: 1.1
+              max: 3.0
+              step: 0.1
+
     additional_triggers_section:
       name: Additional Triggers
       icon: mdi:calendar-plus
       description: >
         Optional extra triggers alongside the Schedule helper.
-        Sun-based triggers respect skip conditions. Override time bypasses them all.
+        Sun-based triggers respect skip conditions. Override triggers bypass them all.
       collapsed: true
       input:
+        override_enabled:
+          name: Enable Override Time
+          description: >
+            Fixed daily time that always irrigates — bypasses all skip logic
+            (weather, vacation, already watered).
+          default: false
+          selector:
+            boolean:
+
+        override_time:
+          name: "↳ Override Time"
+          description: "Only applies when Enable Override Time is on."
+          default: "19:00:00"
+          selector:
+            time:
+
         sun_schedule_enabled:
           name: Enable Sun-Based Triggers
           description: Trigger irrigation relative to sunset or sunrise.
@@ -201,21 +302,16 @@ blueprint:
                 - label: "2 hours after sunrise"
                   value: "+02:00:00"
 
-        override_enabled:
-          name: Enable Override Time
+        override_schedule:
+          name: Override Schedule — Multiple Slots (optional)
           description: >
-            Fixed daily time that always irrigates — bypasses all skip logic
-            (weather, vacation, already watered). Useful for a guaranteed evening run.
-          default: false
+            Alternative to the single Override Time above.
+            Select a second Schedule helper to define any number of override slots — each
+            bypasses all skip conditions. Leave empty to disable.
+          default: ""
           selector:
-            boolean:
-
-        override_time:
-          name: "↳ Override Time"
-          description: "Only applies when Enable Override Time is on."
-          default: "19:00:00"
-          selector:
-            time:
+            entity:
+              domain: schedule
 
     skip_conditions_section:
       name: Skip Conditions
@@ -303,9 +399,9 @@ blueprint:
       collapsed: true
       input:
         notify_on_skip:
-          name: Notify when irrigation is skipped
-          description: Sends a notification whenever a run is skipped (weather, vacation).
-          default: true
+          name: Enable skip notifications
+          description: When enabled, sends a notification whenever a run is skipped. Skipped runs are always logged to the HA Logbook regardless of this setting.
+          default: false
           selector:
             boolean:
 
@@ -337,7 +433,15 @@ variables:
   watered_window_hours: !input watered_window_hours
   min_run_minutes: !input min_run_minutes
   last_run_helper: !input last_run_helper
+  override_schedule: !input override_schedule
   override_enabled: !input override_enabled
+  weather_entity: !input weather_entity
+  hourly_weather_entity: !input hourly_weather_entity
+  forecast_window_hours: !input forecast_window_hours
+  forecast_rain_threshold: !input forecast_rain_threshold
+  temperature_scaling_enabled: !input temperature_scaling_enabled
+  high_temp_threshold: !input high_temp_threshold
+  high_temp_factor: !input high_temp_factor
 
 trigger:
   - platform: state
@@ -355,33 +459,97 @@ trigger:
     offset: !input sunrise_offset
     id: sunrise
 
+  - platform: state
+    entity_id: !input override_schedule
+    to: "on"
+    id: override_schedule
+
   - platform: time
     at: !input override_time
-    id: override
+    id: override_time
 
 action:
   - condition: template
     value_template: >
       {{ trigger.id == 'schedule' or
-         (override_enabled and trigger.id == 'override') or
+         (override_schedule != '' and trigger.id == 'override_schedule') or
+         (override_enabled and trigger.id == 'override_time') or
          (sun_schedule_enabled and
           ((trigger.id == 'sunset' and sunset_enabled) or
            (trigger.id == 'sunrise' and sunrise_enabled))) }}
 
+  - if:
+      - condition: template
+        value_template: "{{ weather_entity != '' }}"
+    then:
+      - service: weather.get_forecasts
+        target:
+          entity_id: "{{ weather_entity }}"
+        data:
+          type: daily
+        response_variable: weather_forecast_raw
+      - variables:
+          forecast_precipitation: "{{ weather_forecast_raw[weather_entity].forecast[0].precipitation | float(0) }}"
+          forecast_temperature: "{{ weather_forecast_raw[weather_entity].forecast[0].temperature | float(0) }}"
+    else:
+      - variables:
+          forecast_precipitation: 0
+          forecast_temperature: 0
+
+  - if:
+      - condition: template
+        value_template: "{{ hourly_weather_entity != '' }}"
+    then:
+      - service: weather.get_forecasts
+        target:
+          entity_id: "{{ hourly_weather_entity }}"
+        data:
+          type: hourly
+        response_variable: hourly_forecast_raw
+      - variables:
+          hourly_precipitation_today: >
+            {% set ns = namespace(total=0) %}
+            {% set now_ts = as_timestamp(now()) %}
+            {% set window_end = now_ts + forecast_window_hours | int * 3600 %}
+            {% for hour in hourly_forecast_raw[hourly_weather_entity].forecast %}
+              {% set ts = as_timestamp(hour.datetime) %}
+              {% if ts >= now_ts and ts < window_end %}
+                {% set ns.total = ns.total + hour.precipitation | float(0) %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.total | round(2) }}
+    else:
+      - variables:
+          hourly_precipitation_today: 0
+
   - variables:
       skip_reason: >
-        {% if trigger.id == 'override' %}
+        {% if trigger.id in ['override_schedule', 'override_time'] %}
         {% elif vacation_boolean != '' and is_state(vacation_boolean, 'on') %}
           Vacation mode is active.
         {% elif skip_if_watered and
             (now() - states[valve_entity].last_changed).total_seconds() < watered_window_hours | int * 3600 and
             (last_run_helper == '' or states(last_run_helper) | float(0) >= min_run_minutes | float) %}
           Already watered — last run was {{ ((now() - states[valve_entity].last_changed).total_seconds() / 60) | int }} min ago.
+        {% elif (weather_entity != '' or hourly_weather_entity != '') and
+            ((states(precipitation_sensor) | float(0) if precipitation_sensor != '' else 0)
+             + (hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation)) >= forecast_rain_threshold | float %}
+          {% set actual = (states(precipitation_sensor) | float(0) if precipitation_sensor != '' else 0) %}
+          {% set rain_fc = hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation %}
+          Combined rain {{ (actual + rain_fc) | round(1) }} mm ({{ actual | round(1) }} mm actual + {{ rain_fc | round(1) }} mm {% if hourly_weather_entity != '' %}forecast next {{ forecast_window_hours }} h{% else %}daily forecast{% endif %}) exceeds threshold {{ forecast_rain_threshold }} mm.
         {% elif precipitation_sensor != '' and states(precipitation_sensor) | float(0) >= rain_threshold | float %}
           Rainfall {{ states(precipitation_sensor) | float | round(1) }} mm exceeds threshold {{ rain_threshold }} mm.
         {% elif rain_probability_sensor != '' and states(rain_probability_sensor) | float(0) >= rain_probability_threshold | float %}
           Rain probability {{ states(rain_probability_sensor) | float | round(0) | int }}% exceeds threshold {{ rain_probability_threshold }}%.
         {% else %}
+        {% endif %}
+
+  - variables:
+      effective_duration: >
+        {% if weather_entity != '' and temperature_scaling_enabled and forecast_temperature >= high_temp_threshold | float %}
+          {{ (irrigation_duration | int * high_temp_factor | float) | round(0) | int }}
+        {% else %}
+          {{ irrigation_duration | int }}
         {% endif %}
 
   - if:
@@ -418,7 +586,7 @@ action:
           entity_id: !input valve
 
       - repeat:
-          count: "{{ (irrigation_duration | int * 60 / 5) | int }}"
+          count: "{{ (effective_duration | int * 60 / 5) | int }}"
           sequence:
             - delay:
                 seconds: 5
@@ -451,7 +619,7 @@ action:
             target:
               entity_id: "{{ last_run_helper }}"
             data:
-              value: "{{ irrigation_duration }}"
+              value: "{{ effective_duration }}"
 
 mode: single
 max_exceeded: silent
