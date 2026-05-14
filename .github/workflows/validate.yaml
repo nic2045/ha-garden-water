@@ -1,0 +1,23 @@
+name: Blueprint Validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    name: Validate Blueprint YAML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate YAML syntax
+        run: |
+          python3 - <<'EOF'
+          import yaml
+          class Loader(yaml.SafeLoader):
+              pass
+          Loader.add_multi_constructor('', lambda loader, tag, node: loader.construct_scalar(node))
+          with open('garden_irrigation.yaml') as f:
+              yaml.load(f, Loader=Loader)
+          print('OK')
+          EOF
