@@ -302,21 +302,12 @@ blueprint:
                 - label: "2 hours after sunrise"
                   value: "+02:00:00"
 
-    override_schedule_section:
-      name: Override — Multiple Slots
-      icon: mdi:calendar-multiple
-      description: >
-        Alternative to the single Override Time above.
-        Select a second Schedule helper to define any number of override slots.
-        Each slot always triggers irrigation, bypassing all skip conditions.
-        Leave empty to disable.
-      collapsed: true
-      input:
         override_schedule:
-          name: Override Schedule (optional)
+          name: Override Schedule — Multiple Slots (optional)
           description: >
-            Second Schedule helper for override runs. Configure slots in
-            Settings → Helpers → Schedule. Leave empty to disable.
+            Alternative to the single Override Time above.
+            Select a second Schedule helper to define any number of override slots — each
+            bypasses all skip conditions. Leave empty to disable.
           default: ""
           selector:
             entity:
