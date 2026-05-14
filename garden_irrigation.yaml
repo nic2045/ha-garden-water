@@ -4,7 +4,7 @@ blueprint:
     # 🌱 Automated Garden Irrigation
 
 
-    **Version: v0.9.4 (build 260514.1200)**
+    **Version: v0.9.5 (build 260514.1400)**
 
 
     Set it up once and your garden takes care of itself — whatever the weather. 🌦️
@@ -135,11 +135,23 @@ blueprint:
               unit_of_measurement: "%"
 
         weather_entity:
-          name: Weather Entity (optional)
+          name: Weather Entity — Daily (optional)
           description: >
             Select your HA weather entity (e.g. weather.forecast_home or weather.dwd_weather_home)
             to use daily forecast data. When set, actual rainfall + forecast precipitation are
             combined for the skip decision. Leave empty to use only the sensors above.
+          default: ""
+          selector:
+            entity:
+              domain: weather
+
+        hourly_weather_entity:
+          name: "↳ Weather Entity — Hourly (optional)"
+          description: >
+            Optional second weather entity providing hourly forecast data
+            (e.g. a DWD measurement station). When set, the blueprint sums all hourly
+            precipitation for today and uses that instead of the daily forecast value —
+            giving a more accurate picture of today's actual + expected rainfall.
           default: ""
           selector:
             entity:
@@ -397,6 +409,7 @@ variables:
   last_run_helper: !input last_run_helper
   override_enabled: !input override_enabled
   weather_entity: !input weather_entity
+  hourly_weather_entity: !input hourly_weather_entity
   forecast_rain_threshold: !input forecast_rain_threshold
   temperature_scaling_enabled: !input temperature_scaling_enabled
   high_temp_threshold: !input high_temp_threshold
@@ -449,6 +462,32 @@ action:
           forecast_precipitation: 0
           forecast_temperature: 0
 
+  - if:
+      - condition: template
+        value_template: "{{ hourly_weather_entity != '' }}"
+    then:
+      - service: weather.get_forecasts
+        target:
+          entity_id: "{{ hourly_weather_entity }}"
+        data:
+          type: hourly
+        response_variable: hourly_forecast_raw
+      - variables:
+          hourly_precipitation_today: >
+            {% set ns = namespace(total=0) %}
+            {% set day_start = as_timestamp(now().strftime('%Y-%m-%d') + 'T00:00:00') %}
+            {% set day_end = day_start + 86400 %}
+            {% for hour in hourly_forecast_raw[hourly_weather_entity].forecast %}
+              {% set ts = as_timestamp(hour.datetime) %}
+              {% if ts >= day_start and ts < day_end %}
+                {% set ns.total = ns.total + hour.precipitation | float(0) %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.total | round(2) }}
+    else:
+      - variables:
+          hourly_precipitation_today: 0
+
   - variables:
       skip_reason: >
         {% if trigger.id == 'override' %}
@@ -458,9 +497,12 @@ action:
             (now() - states[valve_entity].last_changed).total_seconds() < watered_window_hours | int * 3600 and
             (last_run_helper == '' or states(last_run_helper) | float(0) >= min_run_minutes | float) %}
           Already watered — last run was {{ ((now() - states[valve_entity].last_changed).total_seconds() / 60) | int }} min ago.
-        {% elif weather_entity != '' and
-            ((states(precipitation_sensor) | float(0) if precipitation_sensor != '' else 0) + forecast_precipitation) >= forecast_rain_threshold | float %}
-          Combined rain {{ ((states(precipitation_sensor) | float(0) if precipitation_sensor != '' else 0) + forecast_precipitation) | round(1) }} mm (actual + forecast) exceeds threshold {{ forecast_rain_threshold }} mm.
+        {% elif (weather_entity != '' or hourly_weather_entity != '') and
+            ((states(precipitation_sensor) | float(0) if precipitation_sensor != '' else 0)
+             + (hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation)) >= forecast_rain_threshold | float %}
+          {% set actual = (states(precipitation_sensor) | float(0) if precipitation_sensor != '' else 0) %}
+          {% set rain_fc = hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation %}
+          Combined rain {{ (actual + rain_fc) | round(1) }} mm ({{ actual | round(1) }} mm actual + {{ rain_fc | round(1) }} mm {% if hourly_weather_entity != '' %}hourly{% else %}daily{% endif %} forecast) exceeds threshold {{ forecast_rain_threshold }} mm.
         {% elif precipitation_sensor != '' and states(precipitation_sensor) | float(0) >= rain_threshold | float %}
           Rainfall {{ states(precipitation_sensor) | float | round(1) }} mm exceeds threshold {{ rain_threshold }} mm.
         {% elif rain_probability_sensor != '' and states(rain_probability_sensor) | float(0) >= rain_probability_threshold | float %}
