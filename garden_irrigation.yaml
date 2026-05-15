@@ -459,20 +459,15 @@ trigger:
     offset: !input sunrise_offset
     id: sunrise
 
-  - platform: state
-    entity_id: !input override_schedule
-    to: "on"
-    id: override_schedule
-
   - platform: time
     at: !input override_time
     id: override_time
+    alias: "Override Time"
 
 action:
   - condition: template
     value_template: >
       {{ trigger.id == 'schedule' or
-         (override_schedule != '' and trigger.id == 'override_schedule') or
          (override_enabled and trigger.id == 'override_time') or
          (sun_schedule_enabled and
           ((trigger.id == 'sunset' and sunset_enabled) or
@@ -557,10 +552,11 @@ action:
         value_template: "{{ skip_reason | trim != '' }}"
     then:
       - service: logbook.log
+        target:
+          entity_id: !input valve
         data:
           name: "Garden Irrigation"
           message: "Skipped — {{ skip_reason | trim }}"
-          entity_id: !input valve
 
       - if:
           - condition: template
