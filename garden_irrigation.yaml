@@ -98,48 +98,12 @@ blueprint:
       icon: mdi:weather-rainy
       description: Sensors and thresholds for weather-based skip logic.
       input:
-        precipitation_sensor:
-          name: Precipitation Sensor
-          description: Sensor for accumulated precipitation in mm. Leave empty to always irrigate regardless of rainfall.
-          default: ""
-          selector:
-            entity:
-              domain: sensor
-
-        rain_threshold:
-          name: Minimum Rainfall (mm)
-          description: Irrigation is skipped when today's rainfall exceeds this threshold
-          default: 5
-          selector:
-            number:
-              min: 1
-              max: 20
-              unit_of_measurement: mm
-
-        rain_probability_sensor:
-          name: Rain Probability Sensor
-          description: Sensor reporting precipitation probability in % (0–100). Leave empty to skip this check.
-          default: ""
-          selector:
-            entity:
-              domain: sensor
-
-        rain_probability_threshold:
-          name: Rain Probability Threshold (%)
-          description: Irrigation is skipped when rain probability exceeds this threshold
-          default: 70
-          selector:
-            number:
-              min: 10
-              max: 100
-              unit_of_measurement: "%"
-
         weather_entity:
           name: Weather Entity — Daily (optional)
           description: >
             Select your HA weather entity (e.g. weather.forecast_home or weather.dwd_weather_home)
             to use daily forecast data. When set, actual rainfall + forecast precipitation are
-            combined for the skip decision. Leave empty to use only the sensors above.
+            combined for the skip decision. Leave empty to use only the sensors below.
           default: ""
           selector:
             entity:
@@ -216,6 +180,51 @@ blueprint:
               min: 1.1
               max: 3.0
               step: 0.1
+
+        precipitation_sensor:
+          name: Precipitation Sensor (optional)
+          description: >
+            Sensor for today's accumulated precipitation in mm (e.g. a DWD rain gauge).
+            Also used in the combined check above when a Weather Entity is set.
+            Leave empty to always irrigate regardless of measured rainfall.
+          default: ""
+          selector:
+            entity:
+              domain: sensor
+
+        rain_threshold:
+          name: "↳ Minimum Rainfall (mm)"
+          description: >
+            Only applies when a Precipitation Sensor is set.
+            Irrigation is skipped when today's measured rainfall exceeds this threshold.
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 20
+              unit_of_measurement: mm
+
+        rain_probability_sensor:
+          name: Rain Probability Sensor (optional)
+          description: >
+            Sensor reporting precipitation probability in % (0–100).
+            Leave empty to skip this check.
+          default: ""
+          selector:
+            entity:
+              domain: sensor
+
+        rain_probability_threshold:
+          name: "↳ Rain Probability Threshold (%)"
+          description: >
+            Only applies when a Rain Probability Sensor is set.
+            Irrigation is skipped when rain probability exceeds this threshold.
+          default: 70
+          selector:
+            number:
+              min: 10
+              max: 100
+              unit_of_measurement: "%"
 
     additional_triggers_section:
       name: Additional Triggers
@@ -616,6 +625,18 @@ action:
               entity_id: "{{ last_run_helper }}"
             data:
               value: "{{ effective_duration }}"
+
+      - service: logbook.log
+        target:
+          entity_id: !input valve
+        data:
+          name: "Garden Irrigation"
+          message: >
+            Ran {{ effective_duration }} min | Trigger: {{ trigger.id }} |
+            DWD: {{ states(precipitation_sensor) | float(0) | round(1) if precipitation_sensor != '' else 'n/a' }} mm |
+            Forecast: {{ (hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation) | round(1) }} mm |
+            Combined: {{ ((states(precipitation_sensor) | float(0) if precipitation_sensor != '' else 0) + (hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation)) | round(1) }} mm (threshold {{ forecast_rain_threshold }} mm) |
+            Temp: {{ forecast_temperature }}°C{% if weather_entity != '' and temperature_scaling_enabled and forecast_temperature >= high_temp_threshold | float %} — scaling active (×{{ high_temp_factor }}){% endif %}
 
 mode: single
 max_exceeded: silent
