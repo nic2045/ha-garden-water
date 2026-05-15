@@ -617,5 +617,17 @@ action:
             data:
               value: "{{ effective_duration }}"
 
+      - service: logbook.log
+        target:
+          entity_id: !input valve
+        data:
+          name: "Garden Irrigation"
+          message: >
+            Ran {{ effective_duration }} min | Trigger: {{ trigger.id }} |
+            DWD: {{ states(precipitation_sensor) | float(0) | round(1) if precipitation_sensor != '' else 'n/a' }} mm |
+            Forecast: {{ (hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation) | round(1) }} mm |
+            Combined: {{ ((states(precipitation_sensor) | float(0) if precipitation_sensor != '' else 0) + (hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation)) | round(1) }} mm (threshold {{ forecast_rain_threshold }} mm) |
+            Temp: {{ forecast_temperature }}°C{% if weather_entity != '' and temperature_scaling_enabled and forecast_temperature >= high_temp_threshold | float %} — scaling active (×{{ high_temp_factor }}){% endif %}
+
 mode: single
 max_exceeded: silent
