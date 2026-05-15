@@ -1,1 +1,0 @@
-/Users/NicO/dotfiles/claude/projects/ha-garden-water.md
