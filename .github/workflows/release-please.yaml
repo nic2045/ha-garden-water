@@ -15,26 +15,11 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
-      pr: ${{ steps.release.outputs.pr }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
-  enable-automerge:
-    name: Enable auto-merge on release PR
-    needs: release-please
-    if: ${{ needs.release-please.outputs.pr }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Auto-merge when CI passes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_JSON: ${{ needs.release-please.outputs.pr }}
-        run: |
-          PR_URL=$(echo "$PR_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['url'])" 2>/dev/null || echo "$PR_JSON")
-          gh pr merge --auto --squash "$PR_URL" --repo ${{ github.repository }}
 
   update-blueprint-version:
     name: Stamp version into blueprint YAML
@@ -50,7 +35,7 @@ jobs:
           TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
           BUILD=$(date +%y%m%d.%H%M)
-          sed -i "s/Version: v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]* (build [0-9.]*)*/Version: ${TAG} (build ${BUILD})/" garden_irrigation.yaml
+          sed -E -i "s/Version: v[0-9]+\.[0-9]+\.[0-9]+ \(build [0-9.]+\)/Version: ${TAG} (build ${BUILD})/" garden_irrigation.yaml
       - name: Commit and push
         env:
           TAG: ${{ needs.release-please.outputs.tag_name }}
