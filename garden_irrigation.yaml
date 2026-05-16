@@ -585,6 +585,13 @@ action:
                   title: "Irrigation skipped"
                   message: "{{ skip_reason | trim }}"
     else:
+      - service: logbook.log
+        data:
+          name: "Garden Irrigation"
+          entity_id: "{{ valve_entity }}"
+          message: >
+            Starting {{ effective_duration }} min | Trigger: {{ trigger.id }}{% if weather_entity != '' and temperature_scaling_enabled and forecast_temperature >= high_temp_threshold | float %} | Temp: {{ forecast_temperature }}°C — scaling active (×{{ high_temp_factor }}){% endif %}
+
       - service: switch.turn_on
         target:
           entity_id: !input valve
