@@ -561,10 +561,9 @@ action:
         value_template: "{{ skip_reason | trim != '' }}"
     then:
       - service: logbook.log
-        target:
-          entity_id: !input valve
         data:
           name: "Garden Irrigation"
+          entity_id: !input valve
           message: "Skipped — {{ skip_reason | trim }}"
 
       - if:
@@ -627,10 +626,9 @@ action:
               value: "{{ effective_duration }}"
 
       - service: logbook.log
-        target:
-          entity_id: !input valve
         data:
           name: "Garden Irrigation"
+          entity_id: !input valve
           message: >
             Ran {{ effective_duration }} min | Trigger: {{ trigger.id }} |
             DWD: {{ states(precipitation_sensor) | float(0) | round(1) if precipitation_sensor != '' else 'n/a' }} mm |
