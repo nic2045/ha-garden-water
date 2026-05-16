@@ -2,15 +2,28 @@
 
 ## 2026-05-14 (v0.9.4 – v0.9.7)
 
-### Features
+### v0.9.4
 - **Weather Entity — Daily**: select any HA weather entity (DWD, OpenWeatherMap, Met.no, …) — fetches daily forecast via `weather.get_forecasts`; combines actual rainfall + expected precipitation for the skip decision
-- **Weather Entity — Hourly + Forecast Window**: optional second weather entity with hourly forecasts (e.g. DWD measurement station) — sums precipitation over a configurable window of 6–72 h from now (default 24 h); replaces the daily forecast component when set; answers "will it rain enough before the next watering is due?"
 - **Temperature-based duration scaling**: when forecast temperature exceeds a configurable threshold, irrigation duration is multiplied by a configurable factor (e.g. 1.5× at >30 °C); effective duration written to `last_run_helper`
 - All new weather features are fully optional — existing setups with only precipitation/probability sensors are unaffected
 
-### Changed
+### v0.9.5
+- **Weather Entity — Hourly**: optional second weather entity with hourly forecasts (e.g. DWD measurement station) — sums precipitation for today; replaces the daily forecast precipitation in the combined rain check
+
+### v0.9.6
+- **Forecast Window**: replaces today-only sum with a configurable look-ahead window of 6–72 h from now (default 24 h); directly answers *"will it rain enough before the next watering?"* — set to match your watering interval
+
+### v0.9.7
 - **Skip notifications**: default changed from on → off; notifications are now opt-in, Logbook logging always happens regardless
 - **Override — Multiple Slots**: new optional `override_schedule` input accepts a second Schedule helper with any number of slots, each bypassing all skip conditions — sits alongside the existing single fixed-time override as an alternative
+
+### Project & Infrastructure (v0.9.7)
+- **CI / GitHub Actions**: `.github/workflows/validate.yaml` validates YAML syntax on every push and pull request; handles HA-specific `!input` tags correctly
+- **Blueprint Validation badge**: CI status badge in README links directly to the workflow run
+- **HA Version badge**: documents minimum supported HA version (2024.6+)
+- **My Home Assistant import badge**: one-click blueprint import button at the top of the README
+- **HACS removed**: HACS is intended for integrations, not blueprints; replaced with standard Blueprint Exchange workflow
+- **README restructured**: features grouped into 5 sections (Weather Intelligence, Scheduling, Skip Conditions, Notifications, Additional Features); setup guide UI-first with YAML as alternative; weather integration reference table
 
 ### Inspiration & credit
 
