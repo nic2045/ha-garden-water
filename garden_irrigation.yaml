@@ -564,7 +564,7 @@ action:
         data:
           name: "Garden Irrigation"
           entity_id: "{{ valve_entity }}"
-          message: "Skipped — {{ skip_reason | trim }}"
+          message: "Skipped | Trigger: {{ trigger.id }} | {{ skip_reason | trim }}"
 
       - if:
           - condition: template
