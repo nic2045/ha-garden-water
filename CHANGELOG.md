@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.11.0](https://github.com/nic2045/ha-garden-water/compare/v0.10.0...v0.11.0) (2026-05-16)
+
+
+### Features
+
+* add HACS support, HA version badge, and HACS validation CI ([07144f7](https://github.com/nic2045/ha-garden-water/commit/07144f752c106395d5278c4ab492ea575ec7a5a6))
+* add hourly weather entity for today's precipitation sum ([baa2f9b](https://github.com/nic2045/ha-garden-water/commit/baa2f9baa5d6219a4e3681f1059866636908540c))
+* add Skip if Already Watered feature ([c59ae95](https://github.com/nic2045/ha-garden-water/commit/c59ae95daa3009b24ea343eb97724b7774ec4bda))
+* add skip logging and optional notifications ([a4c4b80](https://github.com/nic2045/ha-garden-water/commit/a4c4b80eeda447543444baab8d18a1cbf14a39c8))
+* add start log entry before valve opens ([f1fcf0d](https://github.com/nic2045/ha-garden-water/commit/f1fcf0d238ba387e35046b603340490006d5644f))
+* add sun-based schedule section with sunset/sunrise offset controls ([148c432](https://github.com/nic2045/ha-garden-water/commit/148c432204f8746b75c5c7905dc3dcb7f758a6ee))
+* add weather entity support with combined rain forecast and temperature-based duration scaling ([0fde9a7](https://github.com/nic2045/ha-garden-water/commit/0fde9a7cd89976ee34ac28e8400e66f2d4e02735)), closes [#2](https://github.com/nic2045/ha-garden-water/issues/2)
+* filter DWD sensor selectors by integration ([a47446d](https://github.com/nic2045/ha-garden-water/commit/a47446df38c7ee66384834d6d67bfed0562622f2))
+* group all inputs into logical UI sections ([0afd23c](https://github.com/nic2045/ha-garden-water/commit/0afd23c46eba16297901677cdf4ae953b5bd78b3))
+* group motion sensor and debounce into collapsible UI section ([a15d24f](https://github.com/nic2045/ha-garden-water/commit/a15d24f92fd890f0309f39384bceb1fe89145a6c))
+* make vacation_boolean optional ([1d8cb18](https://github.com/nic2045/ha-garden-water/commit/1d8cb18e7d90e95f1342f6e70ab5e9eee6852f20))
+* make weather sensors optional ([0968965](https://github.com/nic2045/ha-garden-water/commit/096896594ff2befcb57a0b3953dc863d4aba2c22))
+* notify why irrigation was skipped ([8cec56d](https://github.com/nic2045/ha-garden-water/commit/8cec56d354162e495d0e41677988ecbb90042d22))
+* rename all variables/inputs to English, add homeassistant.min_version 2024.5.0 ([196ca4a](https://github.com/nic2045/ha-garden-water/commit/196ca4a6e4c8d68be0f19e29cd99f9a143ecbac1))
+* replace custom time logic with HA Schedule helper ([254d455](https://github.com/nic2045/ha-garden-water/commit/254d4550f70f1003815f3f560b04330a2b8116a5))
+* replace override_time with override_schedule (any number of slots) ([a5ea405](https://github.com/nic2045/ha-garden-water/commit/a5ea40590dfd51bb3755714a4420ad7510ff234e))
+* replace today-only hourly sum with configurable forecast window ([aba7190](https://github.com/nic2045/ha-garden-water/commit/aba719007a26d94015c81c9fe7a15c2700ca6614)), closes [#3](https://github.com/nic2045/ha-garden-water/issues/3)
+* support any weather integration via device_class filter ([21ce875](https://github.com/nic2045/ha-garden-water/commit/21ce87556789c8b9c950a262f9f6a07e4cb996c0))
+* support both override schedule and override fixed time ([41708d6](https://github.com/nic2045/ha-garden-water/commit/41708d6a59fb20baf7a856e7d7cfedb5ba05ba56))
+* weather entity support, forecast window, temperature scaling, override schedule ([9140be0](https://github.com/nic2045/ha-garden-water/commit/9140be0ebd0b7c9e59a4666031e330f670b55f49))
+* weather forecast integration (daily + hourly + temperature scaling) ([e7e8368](https://github.com/nic2045/ha-garden-water/commit/e7e836865da7dc79ab5a5b630b1fe5eb47e2b77c))
+
+
+### Bug Fixes
+
+* accept both switch and valve domains for irrigation valve input ([c0b9522](https://github.com/nic2045/ha-garden-water/commit/c0b9522f8966cc67996b66f497c0d6954763a725))
+* align skip log format with start/end entries ([f24345c](https://github.com/nic2045/ha-garden-water/commit/f24345c243937b65865451f2757c66d198bdb7b0))
+* default skip notifications to off ([b8b19bc](https://github.com/nic2045/ha-garden-water/commit/b8b19bc1657ce6c86c75e459f42c3f1615af63f2))
+* move logbook.log entity_id from target to data ([994a6c1](https://github.com/nic2045/ha-garden-water/commit/994a6c176a03b7522413ad4059279857b508539f))
+* quote description containing colon to prevent YAML parse error ([e825d75](https://github.com/nic2045/ha-garden-water/commit/e825d7556c1db3cc3f392497d836b4f1e08186dd))
+* remove colon from precipitation sensor description ([5655d59](https://github.com/nic2045/ha-garden-water/commit/5655d596d3df75cc68a28bdead34fcbb6f3ed912))
+* remove device_class filter from precipitation sensor — DWD does not set it ([c37c7d6](https://github.com/nic2045/ha-garden-water/commit/c37c7d6e8d2340d7f8f695a2deba358f16c3691c))
+* remove min_ha_version field not supported by current HA version ([7225bb4](https://github.com/nic2045/ha-garden-water/commit/7225bb4b3852438f4ebaef447c3cfc5b0a0d8319))
+* rename workflow to validate.yaml, fix !input tag handling, move badge up ([5634d54](https://github.com/nic2045/ha-garden-water/commit/5634d5423fec47cbff73cdac7b95c93362cf26a1))
+* replace hacs/action with YAML validation (blueprint category unsupported) ([420cb4a](https://github.com/nic2045/ha-garden-water/commit/420cb4a33b1d98d2074cb24efc9fe765cb878a53))
+* simplify hacs.json to standard blueprint fields ([add11b2](https://github.com/nic2045/ha-garden-water/commit/add11b295b44e608bcd19054e9756a3eb5ebcd48))
+* sync blueprint version to v0.10.0, fix sed pattern in release workflow ([0388fc7](https://github.com/nic2045/ha-garden-water/commit/0388fc75429a5f989e87ad84361f0ffa6b925121))
+* use template for last_run_helper entity_id to avoid validation error when empty ([fe44890](https://github.com/nic2045/ha-garden-water/commit/fe44890a31ee0a5d99e6a8de0795c04b1e0fd9e9))
+* use template for logbook.log entity_id to avoid list type error ([cdc795f](https://github.com/nic2045/ha-garden-water/commit/cdc795fea3bb249da5b8d9dd13b73652f8a9a793))
+
 ## [0.10.0](https://github.com/nic2045/ha-garden-water/compare/v0.9.7...v0.10.0) (2026-05-16)
 
 
