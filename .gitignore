@@ -1,6 +1,3 @@
-# Local Claude dotfiles symlink (managed by ~/Coding/dotfiles/setup.sh)
-CLAUDE.md
-
 # macOS
 .DS_Store
 .AppleDouble
