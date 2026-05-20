@@ -19,6 +19,7 @@ blueprint:
 
       - **Weather Skip Logic:** 🌧️
           - Skips irrigation when today's accumulated rainfall exceeds your threshold.
+          - **Water balance skip:** combine a precipitation sensor with an evapotranspiration (ET) sensor — skips when precipitation − ET exceeds your threshold. Provider-agnostic; ET is optional.
           - Skips when rain probability is too high.
           - **Weather entity support:** combine actual rainfall + daily forecast precipitation for a smarter skip decision (works with DWD, OpenWeatherMap, Met.no, etc.).
           - **Temperature-based duration scaling:** irrigate longer on hot days — configurable threshold and multiplier.
@@ -202,6 +203,33 @@ blueprint:
             number:
               min: 1
               max: 20
+              unit_of_measurement: mm
+
+        et_sensor:
+          name: Evapotranspiration (ET) Sensor (optional)
+          description: >
+            Sensor for today's evapotranspiration in mm — the water lost from soil
+            and plants. Combined with the Precipitation Sensor above to compute a
+            water balance (precipitation − ET). Provider-agnostic: use any REST or
+            integration sensor that reports ET in mm. Leave empty to treat ET as 0.
+          default: ""
+          selector:
+            entity:
+              domain: sensor
+
+        water_balance_threshold:
+          name: "↳ Water Balance Skip Threshold (mm)"
+          description: >
+            Only applies when a Precipitation Sensor is set.
+            Irrigation is skipped when the water balance (precipitation − ET) exceeds
+            this value — i.e. recent rainfall more than offset evaporation, so the soil
+            still holds a surplus.
+          default: 2
+          selector:
+            number:
+              min: 0
+              max: 20
+              step: 0.5
               unit_of_measurement: mm
 
         rain_probability_sensor:
@@ -429,6 +457,8 @@ variables:
   rain_threshold: !input rain_threshold
   rain_probability_threshold: !input rain_probability_threshold
   precipitation_sensor: !input precipitation_sensor
+  et_sensor: !input et_sensor
+  water_balance_threshold: !input water_balance_threshold
   rain_probability_sensor: !input rain_probability_sensor
   vacation_boolean: !input vacation_boolean
   motion_sensor: !input motion_sensor
@@ -541,6 +571,11 @@ action:
           {% set actual = (states(precipitation_sensor) | float(0) if precipitation_sensor != '' else 0) %}
           {% set rain_fc = hourly_precipitation_today if hourly_weather_entity != '' else forecast_precipitation %}
           Combined rain {{ (actual + rain_fc) | round(1) }} mm ({{ actual | round(1) }} mm actual + {{ rain_fc | round(1) }} mm {% if hourly_weather_entity != '' %}forecast next {{ forecast_window_hours }} h{% else %}daily forecast{% endif %}) exceeds threshold {{ forecast_rain_threshold }} mm.
+        {% elif precipitation_sensor != '' and
+            (states(precipitation_sensor) | float(0) - (states(et_sensor) | float(0) if et_sensor != '' else 0)) > water_balance_threshold | float %}
+          {% set precip = states(precipitation_sensor) | float(0) %}
+          {% set et = states(et_sensor) | float(0) if et_sensor != '' else 0 %}
+          Water balance {{ (precip - et) | round(1) }} mm (precip {{ precip | round(1) }} mm − ET {{ et | round(1) }} mm) exceeds threshold {{ water_balance_threshold }} mm.
         {% elif precipitation_sensor != '' and states(precipitation_sensor) | float(0) >= rain_threshold | float %}
           Rainfall {{ states(precipitation_sensor) | float | round(1) }} mm exceeds threshold {{ rain_threshold }} mm.
         {% elif rain_probability_sensor != '' and states(rain_probability_sensor) | float(0) >= rain_probability_threshold | float %}
