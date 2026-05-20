@@ -34,8 +34,15 @@ jobs:
         env:
           TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
           BUILD=$(date +%y%m%d.%H%M)
-          sed -E -i "s/Version: v[0-9]+\.[0-9]+\.[0-9]+ \(build [0-9.]+\)/Version: ${TAG} (build ${BUILD})/" garden_irrigation.yaml
+          sed -E -i "s/Version: v?[0-9]+\.[0-9]+\.[0-9]+ \(build [0-9.]+\)/Version: v${VERSION} (build ${BUILD})/" garden_irrigation.yaml
+          if ! grep -q "Version: v${VERSION} (build ${BUILD})" garden_irrigation.yaml; then
+            echo "::error::Version stamp failed — the 'Version: vX.Y.Z (build ...)' pattern was not found in garden_irrigation.yaml."
+            exit 1
+          fi
+          echo "Stamped blueprint version v${VERSION} (build ${BUILD})"
       - name: Commit and push
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
