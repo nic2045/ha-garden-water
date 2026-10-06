@@ -482,28 +482,30 @@ variables:
   high_temp_threshold: !input high_temp_threshold
   high_temp_factor: !input high_temp_factor
 
-trigger:
-  - platform: state
+triggers:
+  - trigger: state
     entity_id: !input schedule_entity
     to: "on"
     id: schedule
 
-  - platform: sun
-    event: sunset
-    offset: !input sunset_offset
+  - trigger: sun
+    options:
+      event: sunset
+      offset: !input sunset_offset
     id: sunset
 
-  - platform: sun
-    event: sunrise
-    offset: !input sunrise_offset
+  - trigger: sun
+    options:
+      event: sunrise
+      offset: !input sunrise_offset
     id: sunrise
 
-  - platform: time
+  - trigger: time
     at: !input override_time
     id: override_time
     alias: "Override Time"
 
-action:
+actions:
   - condition: template
     value_template: >
       {{ trigger.id == 'schedule' or
@@ -516,7 +518,7 @@ action:
       - condition: template
         value_template: "{{ weather_entity != '' }}"
     then:
-      - service: weather.get_forecasts
+      - action: weather.get_forecasts
         target:
           entity_id: "{{ weather_entity }}"
         data:
@@ -534,7 +536,7 @@ action:
       - condition: template
         value_template: "{{ hourly_weather_entity != '' }}"
     then:
-      - service: weather.get_forecasts
+      - action: weather.get_forecasts
         target:
           entity_id: "{{ hourly_weather_entity }}"
         data:
@@ -595,7 +597,7 @@ action:
       - condition: template
         value_template: "{{ skip_reason | trim != '' }}"
     then:
-      - service: logbook.log
+      - action: logbook.log
         data:
           name: "Garden Irrigation"
           entity_id: "{{ valve_entity }}"
@@ -605,7 +607,7 @@ action:
           - condition: template
             value_template: "{{ notify_on_skip }}"
         then:
-          - service: persistent_notification.create
+          - action: persistent_notification.create
             data:
               title: "Irrigation skipped"
               message: "{{ skip_reason | trim }}"
@@ -615,19 +617,19 @@ action:
               - condition: template
                 value_template: "{{ notify_service != '' }}"
             then:
-              - service: "{{ notify_service }}"
+              - action: "{{ notify_service }}"
                 data:
                   title: "Irrigation skipped"
                   message: "{{ skip_reason | trim }}"
     else:
-      - service: logbook.log
+      - action: logbook.log
         data:
           name: "Garden Irrigation"
           entity_id: "{{ valve_entity }}"
           message: >
             Starting {{ effective_duration }} min | Trigger: {{ trigger.id }}{% if weather_entity != '' and temperature_scaling_enabled and forecast_temperature >= high_temp_threshold | float %} | Temp: {{ forecast_temperature }}°C — scaling active (×{{ high_temp_factor }}){% endif %}
 
-      - service: switch.turn_on
+      - action: switch.turn_on
         target:
           entity_id: !input valve
 
@@ -641,7 +643,7 @@ action:
                   value_template: >
                     {{ motion_sensor != '' and is_state(motion_sensor, 'on') }}
               then:
-                - service: switch.turn_off
+                - action: switch.turn_off
                   target:
                     entity_id: !input valve
                 - wait_template: "{{ is_state(motion_sensor, 'off') }}"
@@ -649,11 +651,11 @@ action:
                     minutes: 10
                 - delay:
                     seconds: !input debounce_seconds
-                - service: switch.turn_on
+                - action: switch.turn_on
                   target:
                     entity_id: !input valve
 
-      - service: switch.turn_off
+      - action: switch.turn_off
         target:
           entity_id: !input valve
 
@@ -661,13 +663,13 @@ action:
           - condition: template
             value_template: "{{ last_run_helper != '' }}"
         then:
-          - service: input_number.set_value
+          - action: input_number.set_value
             target:
               entity_id: "{{ last_run_helper }}"
             data:
               value: "{{ effective_duration }}"
 
-      - service: logbook.log
+      - action: logbook.log
         data:
           name: "Garden Irrigation"
           entity_id: "{{ valve_entity }}"
