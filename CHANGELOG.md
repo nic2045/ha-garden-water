@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/nic2045/ha-garden-water/compare/v0.12.0...v0.12.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* migrate to current HA trigger/action syntax ([273e6c4](https://github.com/nic2045/ha-garden-water/commit/273e6c441a05edec365db3dfb33c5a666a2e1b8a))
+
 ## [0.12.0](https://github.com/nic2045/ha-garden-water/compare/v0.11.0...v0.12.0) (2026-05-20)
 
 
